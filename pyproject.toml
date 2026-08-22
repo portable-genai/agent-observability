@@ -57,7 +57,7 @@ dev = [
   # Pinned exactly: ruff's formatter output changes between releases, so an unpinned
   # version drifts from CI and fails `ruff format --check`. Bump deliberately.
   "ruff==0.15.18",
-  "mypy>=1.10",
+  "mypy>=2.3.1",
   "types-PyYAML",
   # agent-eval-kit: TEST-ONLY here, for assert_can_go_red. Hrz5 is a control-plane service
   # with no model to promote, so it does not adopt the smoke/gate scaffold; the falsification
