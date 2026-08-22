@@ -40,7 +40,7 @@ dependencies = [
 [project.optional-dependencies]
 # Pinned per mid-2026 research. Only needed for the 'gcp' profile.
 gcp = [
-  "google-cloud-logging>=3.11",
+  "google-cloud-logging>=3.16.2",
   "google-cloud-firestore>=2.16",
   "google-cloud-bigquery>=3.25",
   "google-api-core>=2.19",
