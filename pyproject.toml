@@ -41,7 +41,7 @@ dependencies = [
 # Pinned per mid-2026 research. Only needed for the 'gcp' profile.
 gcp = [
   "google-cloud-logging>=3.11",
-  "google-cloud-firestore>=2.16",
+  "google-cloud-firestore>=2.28.1",
   "google-cloud-bigquery>=3.25",
   "google-api-core>=2.19",
 ]
