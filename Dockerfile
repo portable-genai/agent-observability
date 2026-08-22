@@ -2,7 +2,7 @@
 # Multi-stage: build a wheel, then install it (with the [gcp] extra) into a slim runtime.
 
 # ---- builder ---------------------------------------------------------------- #
-FROM python:3.12-slim@sha256:423ed6ab25b1921a477529254bfeeabf5855151dc2c3141699a1bfc852199fbf AS builder
+FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4 AS builder
 
 WORKDIR /build
 RUN pip install --no-cache-dir build
@@ -12,7 +12,7 @@ COPY src ./src
 RUN python -m build --wheel --outdir /dist
 
 # ---- runtime ---------------------------------------------------------------- #
-FROM python:3.12-slim@sha256:423ed6ab25b1921a477529254bfeeabf5855151dc2c3141699a1bfc852199fbf AS runtime
+FROM python:3.14-slim@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4 AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
