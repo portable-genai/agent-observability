@@ -1,0 +1,117 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-observability"
+version = "0.0.1"
+description = "Hrz5 Agent Observability, Audit & FinOps — OpenTelemetry tracing + token cost/latency dashboards + compliance-grade immutable (WORM) prompt/response audit for the Horizon agent platform, backed by a locked Cloud Logging bucket + BigQuery FinOps export."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Ashish Awasthi" }]
+keywords = [
+  "observability",
+  "opentelemetry",
+  "audit",
+  "worm",
+  "cloud-logging",
+  "finops",
+  "bigquery",
+  "gcp",
+  "cloud-run",
+  "fastapi",
+]
+
+# Core deps are framework-light so the service installs and the fallback profile runs
+# without any Google Cloud SDK. Managed-service adapters live in the [gcp] extra.
+dependencies = [
+  # Shared commons, pinned by tag; no build-time coupling. Public repo, so CI
+  # installs it with zero credentials. hex-service-kit: inbound S2S verification (web); Hrz5 is
+  # the reference implementation the kit's verifier was extracted from.
+  "hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@v0.0.1",
+  "fastapi>=0.111",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# Pinned per mid-2026 research. Only needed for the 'gcp' profile.
+gcp = [
+  "google-cloud-logging>=3.11",
+  "google-cloud-firestore>=2.16",
+  "google-cloud-bigquery>=3.25",
+  "google-api-core>=2.19",
+]
+# OpenTelemetry instrumentation for the running service (traces -> OTel collector).
+otel = [
+  "opentelemetry-sdk>=1.27",
+  "opentelemetry-exporter-otlp>=1.27",
+  "opentelemetry-instrumentation-fastapi>=0.48b0",
+]
+dev = [
+  "pytest>=8.2",
+  "httpx>=0.27",
+  # Pinned exactly: ruff's formatter output changes between releases, so an unpinned
+  # version drifts from CI and fails `ruff format --check`. Bump deliberately.
+  "ruff==0.15.18",
+  "mypy>=1.10",
+  "types-PyYAML",
+  # agent-eval-kit: TEST-ONLY here, for assert_can_go_red. Hrz5 is a control-plane service
+  # with no model to promote, so it does not adopt the smoke/gate scaffold; the falsification
+  # harness applies all the same, because an audit-integrity metric goes falsely green as
+  # easily as a judge score. Importing the package does not import the gate client.
+  "agent-eval-kit @ git+https://github.com/portable-genai/agent-eval-kit@v0.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/portable-genai/agent-observability"
+
+[project.scripts]
+agent-observability = "observability.cli.main:app"
+
+# Required for the hex-service-kit git+https pin (a direct reference).
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/observability"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+# `.agents/skills/` holds vendored copies of the catalog's shared build skills. They are
+# upstream artifacts resynced from the catalog repo, not this repository's source, so a
+# root-level `ruff check .` must not lint (or try to reformat) them.
+extend-exclude = [".agents/skills"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+[tool.ruff.lint.isort]
+# `helpers` is a local test-support module, not a third-party dependency.
+known-first-party = ["observability", "helpers"]
+[tool.ruff.lint.per-file-ignores]
+# S101 (assert) is fine in tests; the runtime Protocol isinstance assert in the container
+# is intentional.
+"tests/*" = ["S101"]
+"src/observability/container.py" = ["S101"]
+# Demo/presenter scripts sit OUTSIDE the CI gate (gate = src + tests only). They embed
+# long narration strings and curl one-liners; long lines there are intentional.
+"scripts/*" = ["E501"]
+
+[tool.pytest.ini_options]
+# "." makes the eval scorers importable as ``eval.run_eval``, so the not-falsely-green proof
+# drives the shipped metric rather than a copy of it.
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+markers = [
+  "integration: requires live Google Cloud credentials (deselect with -m 'not integration')",
+]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+ignore_missing_imports = true

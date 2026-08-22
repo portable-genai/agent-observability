@@ -1,0 +1,46 @@
+# Copy to terraform.tfvars and set your project id. Everything else has a concrete
+# us-central1 default; only project_id (and optionally the container image) is per-tenant.
+
+project_id = "your-gcp-project"
+service_audience = "https://observability-REPLACE.run.app"
+audit_writer_service_accounts = [
+  "ai-quality-app@your-gcp-project.iam.gserviceaccount.com",
+  "doc1-runtime@your-gcp-project.iam.gserviceaccount.com",
+]
+release_approver_service_accounts = [
+  "model-risk-reviewer@your-gcp-project.iam.gserviceaccount.com",
+]
+
+# region is pinned to us-central1 and validated; no need to set it.
+# retention_days defaults to 2557 (~7 years). LOCKING IS IRREVERSIBLE — see logging_worm.tf.
+
+# container_image = "us-central1-docker.pkg.dev/your-gcp-project/hrz/agent-observability:latest"
+
+# OTLP collector (trace ingest). The image defaults to otel/opentelemetry-collector-contrib;
+# pin it to a digest in production. Grant the verticals' runtime SAs invoke access so they
+# can export spans (they set OTEL_EXPORTER_OTLP_ENDPOINT to the collector's otlp_endpoint output).
+# otel_collector_image        = "otel/opentelemetry-collector-contrib:0.109.0"
+# otel_caller_service_accounts = ["cdd-sow-research@your-gcp-project.iam.gserviceaccount.com"]
+
+# --------------------------------------------------------------------------- #
+# Residency, encryption and perimeter (practice D5). A second region or a second
+# enterprise is THIS file changing, never a fork of the configuration.
+# --------------------------------------------------------------------------- #
+# Residency allowlist. `region` must appear here or `terraform plan` fails, and the app
+# re-validates the same list at load (OBSERVABILITY_ALLOWED_REGIONS).
+# allowed_regions = ["us-central1"]
+
+# CMEK: the key is created in `region` and bound per service (logging bucket, BigQuery,
+# both Cloud Run services). Rotation is yours to set; 90 days by default.
+# key_rotation_period = "7776000s"
+
+# Set false when residency / CMEK Org Policy is owned centrally at folder or org level.
+# enforce_org_policies = true
+
+# VPC-SC. The perimeter is inert until you supply your Access Context Manager policy id.
+# It then applies in DRY RUN: violations are logged and allowed, and the
+# "Hrz5 VPC-SC dry-run violations" alert is the readiness signal. Promote only after a
+# quiet window.
+# access_policy_id     = "123456789012"
+# vpc_sc_access_levels = ["accessPolicies/123456789012/accessLevels/corp_managed_devices"]
+# vpc_sc_enforce       = false

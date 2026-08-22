@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.rename-venv/
+.python-version
+
+# Local env + local profile store (keep .env.example tracked)
+.env
+*.local.db
+.observability/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Provider selections are source-controlled; do not ignore .terraform.lock.hcl.
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.*
+infra/terraform/*.tfvars
+!infra/terraform/terraform.tfvars.example
+crash.log
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

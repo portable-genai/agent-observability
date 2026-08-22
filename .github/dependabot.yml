@@ -1,0 +1,24 @@
+# Automated dependency updates for every ecosystem the repo pins.
+#
+# Pairs with the committed lockfiles (requirements-*.lock), the digest-pinned base
+# image (Dockerfile) and the SHA-pinned GitHub Actions: dependabot proposes the bumps,
+# CI's supply-chain job (pip-audit) and the normal gate decide.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

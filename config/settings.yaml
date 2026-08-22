@@ -1,0 +1,56 @@
+# Hrz5 Agent Observability, Audit & FinOps (hrz) — runtime configuration.
+#
+# Switch the whole backend by setting OBSERVABILITY_PROFILE:
+#   gcp    -> Cloud Logging locked-bucket WORM adapter (needs the [gcp] extra installed)
+#   local  -> SDK-free append-only SQLite WORM stand-in (dev / test default; no GCP SDK,
+#            no API key, no emulators; optional Firestore-emulator opt-in)
+#   onprem -> fail-fast Google Distributed Cloud migration placeholder (NotImplementedError)
+#
+# Production default is 'gcp' once the [gcp] extra and the locked bucket are provisioned;
+# the dev / test default (Makefile, CI, .env.example) is 'local'.
+
+project_id: ${GOOGLE_CLOUD_PROJECT:-your-gcp-project}
+region: ${GCP_REGION:-us-central1}            # selected at deploy; must match Terraform
+# Residency allowlist (P-03). The same list Terraform validates var.region against, and the
+# app re-validates region against it at load: an unapproved region fails closed at startup.
+# NOT interpolated: OBSERVABILITY_ALLOWED_REGIONS is read in three states by
+# config.resolve_allowed_regions, so an allowlist an operator SET to an empty value refuses
+# instead of quietly inheriting this list.
+allowed_regions: [us-central1]
+#
+# `profile:` is deliberately ABSENT from this file, and Settings.from_dict refuses it if it
+# comes back. A `${OBSERVABILITY_PROFILE:-local}` placeholder is a TWO-state read: an unset
+# variable arrives here indistinguishable from a deliberately chosen `local`, and `local` is
+# the one profile whose WORM ingest opens for an unset service token. The profile is resolved
+# once, in three states, by config.resolve_profile, which also validates it at import so a
+# mis-capitalised `Local` is a boot failure rather than a serving app whose loopback exposure
+# guard compares `== "local"` and therefore never applies.
+max_events: ${OBSERVABILITY_MAX_EVENTS:-1000} # local-store read-back capacity
+
+logging:
+  log_name: ${OBSERVABILITY_LOG_NAME:-agent-observability-audit}
+  bucket_id: ${OBSERVABILITY_WORM_BUCKET:-agent-observability-worm}
+  retention_days: ${OBSERVABILITY_RETENTION_DAYS:-2557}   # ~7 years (rule R2 WORM)
+  read_back_window_days: ${OBSERVABILITY_READBACK_DAYS:-30}
+
+finops:
+  bigquery_dataset: ${OBSERVABILITY_BQ_DATASET:-agent_finops}
+  bigquery_table: ${OBSERVABILITY_BQ_TABLE:-audit_events}
+
+local:
+  audit_path: ${OBSERVABILITY_LOCAL_AUDIT:-}  # append-only SQLite WORM store; "" => ~/.observability/audit.db
+  # External chain-head anchor for tamper evidence (C9). "" => <audit_path>.anchor.json.
+  # Put it on a different volume / under different credentials than the store.
+  anchor_path: ${OBSERVABILITY_LOCAL_ANCHOR:-}
+
+# ----------------------------------------------------------------------------- #
+# Port -> adapter bindings. The container requires an explicit entry for the active
+# profile and never falls back to another runtime. Each adapter class takes a single
+# Settings argument. These dotted paths are the build contract: match them exactly.
+# Every port has explicit local, gcp and onprem bindings.
+# ----------------------------------------------------------------------------- #
+adapters:
+  audit:
+    gcp: observability.adapters.gcp.cloud_logging_audit:CloudLoggingAuditAdapter
+    local: observability.adapters.local.audit:LocalAppendOnlyAuditAdapter
+    onprem: observability.adapters.onprem.audit:OnPremAuditAdapter
