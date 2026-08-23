@@ -33,14 +33,14 @@ dependencies = [
   "fastapi>=0.111",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
-  "pyyaml>=6.0",
+  "pyyaml>=6.0.3",
   "typer>=0.12",
 ]
 
 [project.optional-dependencies]
 # Pinned per mid-2026 research. Only needed for the 'gcp' profile.
 gcp = [
-  "google-cloud-logging>=3.11",
+  "google-cloud-logging>=3.16.2",
   "google-cloud-firestore>=2.16",
   "google-cloud-bigquery>=3.25",
   "google-api-core>=2.19",
@@ -57,7 +57,7 @@ dev = [
   # Pinned exactly: ruff's formatter output changes between releases, so an unpinned
   # version drifts from CI and fails `ruff format --check`. Bump deliberately.
   "ruff==0.15.18",
-  "mypy>=1.10",
+  "mypy>=2.3.1",
   "types-PyYAML",
   # agent-eval-kit: TEST-ONLY here, for assert_can_go_red. Hrz5 is a control-plane service
   # with no model to promote, so it does not adopt the smoke/gate scaffold; the falsification
