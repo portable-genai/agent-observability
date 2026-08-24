@@ -40,11 +40,35 @@ data "google_project" "this" {
   project_id = var.project_id
 }
 
+# Service agents are ASKED FOR, never spelled out. A "service-<number>@gcp-sa-<x>" string is a
+# guess about an implementation detail and it fails twice over: the agent does not exist until
+# the service is provisioned, so the apply dies with "Service account ... does not exist", and
+# the local part is not uniform (BigQuery's CMEK agent is bq-<number>@bigquery-encryption,
+# nothing like the others). Both halves were true here on the first real apply, 2026-08-24.
+#
+# Each block below either CREATES the identity or READS it from the service that owns it, so
+# the address is authoritative and the ordering is explicit rather than hoped for.
+data "google_bigquery_default_service_account" "this" {
+  project = var.project_id
+}
+
+# Cloud Logging exposes no service_identity resource; this data source is the authoritative
+# answer to "which agent encrypts this project's logs".
+data "google_logging_project_cmek_settings" "this" {
+  project = var.project_id
+}
+
+resource "google_project_service_identity" "run" {
+  provider = google-beta
+  project  = var.project_id
+  service  = "run.googleapis.com"
+}
+
 locals {
   cmek_service_agents = {
-    logging  = "service-${data.google_project.this.number}@gcp-sa-logging.iam.gserviceaccount.com"
-    bigquery = "bq-${data.google_project.this.number}@bigquery-encryption.iam.gserviceaccount.com"
-    run      = "service-${data.google_project.this.number}@serverless-robot-prod.iam.gserviceaccount.com"
+    logging  = data.google_logging_project_cmek_settings.this.service_account_id
+    bigquery = data.google_bigquery_default_service_account.this.email
+    run      = google_project_service_identity.run.email
   }
 }
 

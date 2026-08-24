@@ -32,6 +32,8 @@ resource "google_project_iam_member" "run_trace_agent" {
 }
 
 resource "google_cloud_run_v2_service" "observability" {
+  deletion_protection = var.cloud_run_deletion_protection
+
   project  = var.project_id
   name     = "agent-observability"
   location = var.region # us-central1 (P-03)

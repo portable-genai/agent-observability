@@ -5,12 +5,16 @@ resource "google_monitoring_service" "observability" {
   service_id   = "agent-observability"
   display_name = "Hrz5 Agent Observability"
 
+  # CLOUD_RUN, not "cloud_run_revision". The latter is the MONITORED RESOURCE type used in
+  # metric filters, and it is not a Monitoring service type — the API rejects it with
+  # "IDENTIFIER_NOT_SET is not a valid service type", which names neither the field nor the
+  # value and is why this is worth a comment. Found on the first real apply, 2026-08-24.
+  # CLOUD_RUN takes exactly service_name and location; project_id is not one of its labels.
   basic_service {
-    service_type = "cloud_run_revision"
+    service_type = "CLOUD_RUN"
     service_labels = {
-      project_id   = var.project_id
-      location     = var.region
       service_name = google_cloud_run_v2_service.observability.name
+      location     = var.region
     }
   }
 }
@@ -39,6 +43,22 @@ resource "google_monitoring_slo" "availability" {
       ])
     }
   }
+}
+
+locals {
+  # Cloud Monitoring REJECTS an alert filter with no resource.type restriction, and only
+  # equality, one_of() and starts_with() are accepted forms.
+  #
+  # Posture violations do NOT arrive on cloud_run_revision. VPC-SC denials and Org Policy
+  # residency refusals are Cloud Audit Log entries on audited_resource, and a log-based metric
+  # inherits the resource of the entry that produced it. Restricting these two alerts to the
+  # service's own resource type would read as precision and match nothing, which is a posture
+  # alert that never fires — indistinguishable from a clean posture. The union is therefore
+  # deliberately broad; the metric's own log filter is what scopes each signal.
+  #
+  # The service_errors alert below is different and correctly narrow: those entries are
+  # written BY this Cloud Run service, so cloud_run_revision is true by construction.
+  posture_alert_resource_types = "resource.type=one_of(\"audited_resource\",\"global\",\"project\",\"cloud_run_revision\",\"cloud_run_job\",\"service_account\",\"cloudkms_cryptokey\",\"cloudkms_keyring\",\"gce_instance\",\"k8s_container\",\"generic_task\",\"generic_node\",\"gcs_bucket\")"
 }
 
 resource "google_logging_metric" "service_errors" {
@@ -202,7 +222,7 @@ resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
   conditions {
     display_name = "A call would have been blocked by the audit perimeter"
     condition_threshold {
-      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.vpc_sc_dry_run_violations.name}\""
+      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.vpc_sc_dry_run_violations.name}\" AND ${local.posture_alert_resource_types}"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
@@ -247,7 +267,7 @@ resource "google_monitoring_alert_policy" "residency_posture" {
   conditions {
     display_name = "An Org Policy residency / CMEK constraint denied a create"
     condition_threshold {
-      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.residency_policy_violations.name}\""
+      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.residency_policy_violations.name}\" AND ${local.posture_alert_resource_types}"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"

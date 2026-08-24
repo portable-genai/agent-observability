@@ -62,6 +62,8 @@ resource "google_secret_manager_secret_iam_member" "otel_config_access" {
 }
 
 resource "google_cloud_run_v2_service" "otel_collector" {
+  deletion_protection = var.cloud_run_deletion_protection
+
   project  = var.project_id
   name     = "hrz-otel-collector"
   location = var.region # us-central1 (P-03)

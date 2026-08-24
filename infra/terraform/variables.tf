@@ -128,6 +128,20 @@ variable "release_approver_service_accounts" {
   }
 }
 
+variable "cloud_run_deletion_protection" {
+  type        = bool
+  description = <<-EOT
+    Cloud Run deletion protection. True (the default) for anything that matters.
+
+    Declared EXPLICITLY rather than inherited: the provider defaults it to true, and the
+    services here were never setting it, so the first image change produced
+    "cannot destroy service without setting deletion_protection=false" mid-apply — a
+    half-applied stack blocked by a value nobody had chosen. A reference or evaluation stack
+    that must stay replaceable sets this false deliberately.
+  EOT
+  default     = true
+}
+
 variable "otel_collector_image" {
   type        = string
   description = "OpenTelemetry Collector (contrib) image for the OTLP ingest service. Pin to a digest in production (practice D2)."
