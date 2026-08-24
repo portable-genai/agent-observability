@@ -42,7 +42,7 @@ dependencies = [
 gcp = [
   "google-cloud-logging>=3.16.2",
   "google-cloud-firestore>=2.16",
-  "google-cloud-bigquery>=3.25",
+  "google-cloud-bigquery>=3.43.0",
   "google-api-core>=2.19",
 ]
 # OpenTelemetry instrumentation for the running service (traces -> OTel collector).
