@@ -22,7 +22,13 @@ def test_collector_accepts_and_exports_all_three_otel_signals() -> None:
 
     exporter = config["exporters"]["googlecloud"]
     assert exporter["sending_queue"]["enabled"] is True
-    assert exporter["retry_on_failure"]["enabled"] is True
+    # There must be NO retry_on_failure block. The googlecloud exporter does not accept one,
+    # and it is not ignored: the collector refuses the whole configuration and the container
+    # never binds its port. This assertion used to require the opposite, which kept the suite
+    # green while the OTLP ingest service could not start at all — the config was asserted as
+    # a FILE and never as a collector that boots. Verified 2026-08-24 by running the pinned
+    # image against this exact file with and without the block.
+    assert "retry_on_failure" not in exporter
 
 
 def test_collector_redacts_known_sensitive_content_attributes() -> None:

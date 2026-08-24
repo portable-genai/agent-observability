@@ -106,19 +106,21 @@ processors:
         action: upsert
 
 exporters:
-  # Cloud Trace, Monitoring, and Logging. Queueing and retry absorb transient backend
+  # Cloud Trace, Monitoring, and Logging. The sending queue absorbs transient backend
   # failures; persistent failures surface through the collector's own telemetry.
+  #
+  # NO retry_on_failure block: the googlecloud exporter does not accept one, and supplying it
+  # is not ignored — the collector refuses the whole configuration with
+  # "'' has invalid keys: retry_on_failure" and the container never binds its port. That is
+  # exactly how this shipped, so the OTLP ingest service could not start at all; found on the
+  # first real apply, 2026-08-24, and confirmed by running the image against this file with
+  # and without the block. The exporter retries internally; the queue is the tunable part.
   googlecloud:
     project: ${env:GOOGLE_CLOUD_PROJECT}
     sending_queue:
       enabled: true
       queue_size: 2048
       num_consumers: 10
-    retry_on_failure:
-      enabled: true
-      initial_interval: 1s
-      max_interval: 30s
-      max_elapsed_time: 300s
   # Uncomment for local debugging:
   # debug:
   #   verbosity: detailed

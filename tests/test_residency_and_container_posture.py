@@ -12,6 +12,7 @@ offline.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -112,8 +113,25 @@ def test_cmek_key_is_regional_rotated_and_bound_to_every_audit_bearing_service()
     assert "location = var.region" in cmek  # key material shares the data's residency
     assert "rotation_period = var.key_rotation_period" in cmek
     assert "roles/cloudkms.cryptoKeyEncrypterDecrypter" in cmek
-    for agent in ("gcp-sa-logging", "bigquery-encryption", "serverless-robot-prod"):
-        assert agent in cmek
+    # Every audit-bearing service must be bound. What this must NOT assert is the literal
+    # "service-<number>@gcp-sa-<x>" address: that pinned the guess rather than the property,
+    # and the guess is wrong twice over — the agent does not exist until the service is
+    # provisioned, and BigQuery's CMEK agent does not even follow the pattern
+    # (bq-<number>@bigquery-encryption). Asserting the string kept this test green while the
+    # apply failed with "Service account ... does not exist" (2026-08-24).
+    #
+    # So the binding is checked by KEY, and the address by PROVENANCE: each one has to come
+    # from the service that owns it rather than from string interpolation.
+    normalised = re.sub(r"[ \t]+", " ", cmek)
+    for service in ("logging", "bigquery", "run"):
+        assert f"{service} =" in normalised
+    assert "data.google_logging_project_cmek_settings" in cmek
+    assert "data.google_bigquery_default_service_account" in cmek
+    assert "google_project_service_identity" in cmek
+    # Comments are allowed to QUOTE the bad pattern while explaining why it is banned, so this
+    # looks only at code.
+    code = "\n".join(line for line in cmek.splitlines() if not line.lstrip().startswith("#"))
+    assert "gcp-sa-" not in code, "service-agent addresses must be asked for, not spelled out"
 
     # The per-service bindings themselves, each on the resource that holds the data.
     assert "cmek_settings {" in _tf("logging_worm.tf")

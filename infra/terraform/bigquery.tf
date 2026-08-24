@@ -21,6 +21,30 @@ resource "google_bigquery_dataset" "finops" {
     kms_key_name = google_kms_crypto_key.audit.id
   }
 
+  # EXPLICIT access, because BigQuery's implicit default is not least privilege: a dataset
+  # created without an access block is given projectOwners/projectEditors/projectViewers
+  # special groups, which hands every project editor read-write on the analytical mirror of
+  # the audit stream.
+  #
+  # It is also unshippable under a domain-restricted org. Those implicit grants expand to
+  # principals the allowedPolicyMemberDomains policy has not permitted, and dataset creation
+  # fails with "One or more users named in the policy do not belong to a permitted customer"
+  # — which is how this surfaced, on the first real apply into a policy-constrained project
+  # (2026-08-24). Naming the identities makes the dataset both least-privilege and
+  # deployable, rather than widening the domain policy to accommodate a default nobody chose.
+  access {
+    role          = "OWNER"
+    user_by_email = google_service_account.run.email
+  }
+
+  dynamic "access" {
+    for_each = toset(var.release_approver_service_accounts)
+    content {
+      role          = "READER"
+      user_by_email = access.value
+    }
+  }
+
   depends_on = [
     google_project_service.required,
     google_kms_crypto_key_iam_member.service_agents,
