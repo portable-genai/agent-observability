@@ -47,6 +47,19 @@ resource "google_cloud_run_v2_service" "observability" {
     # Bank-held key over the revision's boot disk and in-transit-to-disk state (P-09).
     encryption_key = google_kms_crypto_key.audit.id
 
+    # Keep one instance warm, because every caller's audit path fails CLOSED.
+    #
+    # Scaling to zero is the right default for a service whose callers can wait. This one's
+    # callers cannot: a portal forwards one access event per request here and answers 503 when
+    # the write does not land, so an idle-scaled instance turns the next visitor's first click
+    # into an outage of the whole portal. The floor is one instance, not a retry, because a
+    # retry on an audit write has to reason about idempotency and the cost of a warm instance is
+    # smaller than that argument.
+    scaling {
+      min_instance_count = var.min_instances
+      max_instance_count = var.max_instances
+    }
+
     containers {
       image = var.container_image
 

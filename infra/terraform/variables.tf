@@ -170,3 +170,30 @@ variable "alert_notification_channels" {
   description = "Existing Cloud Monitoring notification-channel resource names."
   default     = []
 }
+
+variable "min_instances" {
+  type        = number
+  default     = 1
+  description = <<-EOT
+    Warm instances for the audit ingest.
+
+    Defaults to one rather than zero because callers fail CLOSED on an audit write: a portal that
+    forwards one access event per request answers 503 when the write does not land, so a
+    cold start here is an outage of whatever is calling. Set it to zero only where the callers
+    can tolerate a cold start on the audit path, which today none of them can.
+  EOT
+  validation {
+    condition     = var.min_instances >= 0 && var.min_instances <= 10
+    error_message = "min_instances must be between 0 and 10."
+  }
+}
+
+variable "max_instances" {
+  type        = number
+  default     = 10
+  description = "Upper bound on audit-ingest instances."
+  validation {
+    condition     = var.max_instances >= 1 && var.max_instances <= 100
+    error_message = "max_instances must be between 1 and 100."
+  }
+}
