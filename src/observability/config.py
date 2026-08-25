@@ -75,7 +75,65 @@ class ProfileError(ValueError):
     """The configured profile is not one this service binds an adapter family for."""
 
 
-_DEFAULT_SETTINGS_PATH = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
+#: Where ``config/settings.yaml`` is looked for, in order, when no explicit path is given.
+#:
+#: ``parents[2]`` alone was correct for an EDITABLE install and wrong for every built image.
+#: From ``src/observability/config.py`` it resolves to the repository root; from the wheel this
+#: image actually installs, ``site-packages/observability/config.py``, it resolves to
+#: ``site-packages/../../config/settings.yaml``, which exists nowhere. The Dockerfile does copy
+#: the file, to ``/app/config``, and the process runs there, so the working directory finds it.
+CONFIG_PATH_ENV = "OBSERVABILITY_CONFIG"
+_SETTINGS_RELATIVE = Path("config") / "settings.yaml"
+_SETTINGS_SEARCH_PATH = (
+    Path.cwd() / _SETTINGS_RELATIVE,
+    Path(__file__).resolve().parents[2] / _SETTINGS_RELATIVE,
+)
+
+
+class SettingsNotFound(RuntimeError):
+    """No ``settings.yaml`` was found, and defaults are not a safe substitute for one.
+
+    The loader used to shrug: a missing file produced an EMPTY mapping, ``from_dict`` filled in
+    defaults, and the service booted with no ``adapters:`` block at all. ``/healthz`` answered
+    200 the whole time, because health does not touch a port. The first real request died on
+    ``no adapter bound for port 'audit'``, which reads like a packaging mistake in the adapter
+    layer rather than what it was: the configuration file never being read.
+    """
+
+
+def _resolve_settings_path(path: str | os.PathLike[str] | None) -> Path:
+    if path is not None:
+        candidate = Path(path)
+        if not candidate.exists():
+            raise SettingsNotFound(f"settings file does not exist: {candidate}")
+        return candidate
+    # Three states, as everywhere else here: unset falls through to the search path, but SET
+    # AND EMPTY is an operator naming no file and must not be read as "use the default".
+    configured = read_env_setting(CONFIG_PATH_ENV)
+    if configured.is_configured_empty:
+        raise SettingsNotFound(
+            f"{CONFIG_PATH_ENV} is set to an empty value, which names no file. Unset it to take "
+            "the search path, or name the settings file you mean."
+        )
+    if not configured.is_unset:
+        candidate = Path(configured.value)
+        if not candidate.exists():
+            raise SettingsNotFound(
+                f"{CONFIG_PATH_ENV} names {candidate}, which does not exist. An operator who "
+                "points this at the wrong path should be told, not silently given defaults."
+            )
+        return candidate
+    for candidate in _SETTINGS_SEARCH_PATH:
+        if candidate.exists():
+            return candidate
+    searched = ", ".join(str(candidate) for candidate in _SETTINGS_SEARCH_PATH)
+    raise SettingsNotFound(
+        "no config/settings.yaml was found. Without it there are no adapter bindings, so every "
+        "port is unbound and the service can answer /healthz while being unable to serve one "
+        f"real request. Searched: {searched}. Set {CONFIG_PATH_ENV} to name it explicitly."
+    )
+
+
 _ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)(?::-([^}]*))?\}")
 
 
@@ -348,12 +406,9 @@ class Settings:
 
     @classmethod
     def load(cls, path: str | os.PathLike[str] | None = None) -> Settings:
-        cfg_path = Path(path) if path is not None else _DEFAULT_SETTINGS_PATH
-        raw: dict[str, Any] = {}
-        if cfg_path.exists():
-            loaded = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
-            raw = _interpolate(loaded)
-        return cls.from_dict(raw)
+        cfg_path = _resolve_settings_path(path)
+        loaded = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        return cls.from_dict(_interpolate(loaded))
 
     def __post_init__(self) -> None:
         """Fail closed at load on an unbindable profile or an out-of-allowlist region.
