@@ -29,7 +29,7 @@ dependencies = [
   # Shared commons, pinned by tag; no build-time coupling. Public repo, so CI
   # installs it with zero credentials. hex-service-kit: inbound S2S verification (web); Hrz5 is
   # the reference implementation the kit's verifier was extracted from.
-  "hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@v0.0.1",
+  "hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@v0.0.4",
   "fastapi>=0.111",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
