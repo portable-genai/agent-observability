@@ -86,6 +86,26 @@ variable "retention_days" {
   default     = 2557
 }
 
+variable "worm_locked" {
+  description = <<-EOT
+    Lock the WORM audit bucket (rule R2).
+    #########################################################################
+    # WARNING: LOCKING IS IRREVERSIBLE. With true, the bucket and its       #
+    # retention window can NEVER be reduced or deleted until every entry    #
+    # ages out (2557 days by default), not even with project-owner rights.  #
+    #########################################################################
+    true (the default) is REQUIRED for a compliant production deploy: the audit trail is
+    Write-Once-Read-Many only when locked. Set false ONLY for evaluation/demo stacks that
+    must remain deletable (terraform destroy works); that posture is NOT compliant, and
+    Rsk1 depends on the guarantee it gives up.
+
+    Setting this false against an ALREADY-locked bucket does not unlock it. The API refuses,
+    as it should. This governs the first apply.
+  EOT
+  type        = bool
+  default     = true
+}
+
 variable "container_image" {
   type        = string
   description = "Cloud Run container image for the Hrz5 service."

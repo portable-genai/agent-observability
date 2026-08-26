@@ -14,14 +14,27 @@
 #         the app + upstream A1); DATA_READ audit logging records every read of the store.
 #
 # ############################################################################ #
-# # WARNING — LOCKING IS IRREVERSIBLE.                                        # #
-# # Setting `locked = true` below PERMANENTLY prevents reducing retention or  # #
+# # WARNING: LOCKING IS IRREVERSIBLE.                                         # #
+# # var.worm_locked (DEFAULT TRUE) PERMANENTLY prevents reducing retention or # #
 # # deleting this bucket for the full retention window (var.retention_days).  # #
 # # You CANNOT undo it, not even with project-owner rights, and `terraform    # #
 # # destroy` will NOT remove it. Confirm retention_days before the first      # #
-# # apply. To trial without locking, set locked = false (NOT compliant for    # #
-# # production — it breaks the rule R2 WORM guarantee Rsk1 depends on).       # #
+# # apply. To trial without locking, set worm_locked = false (NOT compliant   # #
+# # for production: it breaks the rule R2 WORM guarantee Rsk1 depends on).    # #
 # ############################################################################ #
+#
+# This was the literal `locked = true`, and the banner above used to tell the operator to
+# edit this line. That is the wrong shape for a per-deployment decision: it makes the only
+# way to trial the stack a source edit, which no deployment configuration records and no
+# review sees. It also meant a first apply locked the trail for seven years before anyone
+# had chosen to, which is what happened to this deployment on its own first apply.
+#
+# The default stays true, so a fork inherits the compliant posture and nothing about an
+# existing stack changes. What is new is that declining the lock is now something a
+# deployment can SAY rather than something it has to patch.
+#
+# Note for an already-locked bucket: setting this to false will not unlock it. The API
+# refuses, as it should. The knob governs the first apply.
 
 resource "google_logging_project_bucket_config" "worm_audit" {
   project  = var.project_id
@@ -32,8 +45,8 @@ resource "google_logging_project_bucket_config" "worm_audit" {
   # retention_days defaults to 2557 (~7 years) — see var.retention_days.
   retention_days = var.retention_days
 
-  # IRREVERSIBLE — see WARNING banner above. WORM compliance (rule R2) requires this true.
-  locked = true
+  # IRREVERSIBLE: see WARNING banner above. WORM compliance (rule R2) requires this true.
+  locked = var.worm_locked
 
   # Bank-held key over the WORM trail itself (P-09, practice D5). Without this the bucket
   # is encrypted with a Google-managed key and the "bank controls the audit key" claim in
