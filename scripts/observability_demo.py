@@ -116,7 +116,7 @@ def main() -> int:
     print(
         "Profile : local (SDK-free bounded SQLite audit buffer)\n"
         f"Store   : {_TMP}\n"
-        f"Region  : {settings.region} (configurable; defaults to us-central1)\n"
+        f"Region  : {settings.region} (configurable; defaults to asia-southeast1)\n"
         "Note    : synthetic, fictional corpus; no cloud credentials or API key."
     )
 
