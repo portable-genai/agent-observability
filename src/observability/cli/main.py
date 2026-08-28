@@ -36,7 +36,7 @@ app = typer.Typer(
     help=(
         "Hrz5 Agent Observability, Audit & FinOps — write and read back compliance-grade "
         "immutable (WORM) audit records on the Horizon agent platform "
-        "(GCP region configurable; default us-central1)."
+        "(GCP region configurable; default asia-southeast1)."
     ),
 )
 
