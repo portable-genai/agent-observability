@@ -68,11 +68,13 @@ check: lint format-check typecheck test eval demo-selftest portability-demo ## C
 docker: ## Build the container image.
 	docker build -t $(IMAGE) .
 
-tf-init: ## terraform init (infra/terraform).
-	cd infra/terraform && terraform init
+tf-init: ## terraform init — the backend is a partial "gcs" block, so the state location is an input.
+	cd infra/terraform && terraform init -input=false \
+		-backend-config="bucket=$${TF_STATE_BUCKET:?set TF_STATE_BUCKET to the GCS state bucket}" \
+		-backend-config="prefix=$${TF_STATE_PREFIX:?set TF_STATE_PREFIX for this stack}"
 
-tf-plan: ## terraform plan — set project_id in terraform.tfvars first.
-	cd infra/terraform && terraform plan
+tf-plan: ## terraform plan — set project_id in terraform.tfvars first (or pass TF_VAR_FILE).
+	cd infra/terraform && terraform plan $${TF_VAR_FILE:+-var-file="$$TF_VAR_FILE"}
 
 clean: ## Remove caches and build artifacts.
 	rm -rf .pytest_cache .ruff_cache .mypy_cache dist build *.egg-info src/*.egg-info

@@ -13,7 +13,12 @@ and ingests OpenTelemetry traces.
 #    locked = true, which is the compliant default in logging_worm.tf).
 cd infra/terraform
 cp terraform.tfvars.example terraform.tfvars   # set project_id (no default, on purpose)
-terraform init -input=false && terraform plan
+# The backend is a partial "gcs" block: the state location is a deployment input, never
+# code. A bare `terraform init` fails asking for it.
+terraform init -input=false \
+  -backend-config="bucket=YOUR_TFSTATE_BUCKET" \
+  -backend-config="prefix=agent-observability"
+terraform plan
 terraform apply
 
 # 2. Export the outputs consumers and the runtime need.

@@ -162,6 +162,29 @@ variable "cloud_run_deletion_protection" {
   default     = true
 }
 
+variable "firestore_delete_protection_enabled" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Firestore delete protection on the idempotency ledger. Default true.
+
+    This was a hardcoded DELETE_PROTECTION_ENABLED, which made any teardown need a source
+    edit before it could even plan. The protection is right for a production stack; a
+    reference stack that must stay replaceable declines it in tfvars, exactly as it already
+    can for cloud_run_deletion_protection and worm_locked.
+  EOT
+}
+
+variable "artifact_repository_id" {
+  type        = string
+  default     = "agent-observability"
+  description = <<-EOT
+    Artifact Registry repository id for this stack's own images (artifact_registry.tf).
+    The registry the reference deployment pulled from was created by hand and existed in no
+    Terraform; declaring it is what makes a build-from-zero possible.
+  EOT
+}
+
 variable "otel_collector_image" {
   type        = string
   description = "OpenTelemetry Collector (contrib) image for the OTLP ingest service. Pin to a digest in production (practice D2)."

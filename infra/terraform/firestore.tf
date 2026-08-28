@@ -10,7 +10,7 @@ resource "google_firestore_database" "audit_idempotency" {
   location_id = var.region
   type        = "FIRESTORE_NATIVE"
 
-  delete_protection_state = "DELETE_PROTECTION_ENABLED"
+  delete_protection_state = var.firestore_delete_protection_enabled ? "DELETE_PROTECTION_ENABLED" : "DELETE_PROTECTION_DISABLED"
   deletion_policy         = "DELETE"
 
   depends_on = [google_project_service.required]
