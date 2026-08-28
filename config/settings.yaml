@@ -10,13 +10,13 @@
 # the dev / test default (Makefile, CI, .env.example) is 'local'.
 
 project_id: ${GOOGLE_CLOUD_PROJECT:-your-gcp-project}
-region: ${GCP_REGION:-us-central1}            # selected at deploy; must match Terraform
+region: ${GCP_REGION:-asia-southeast1}            # selected at deploy; must match Terraform
 # Residency allowlist (P-03). The same list Terraform validates var.region against, and the
 # app re-validates region against it at load: an unapproved region fails closed at startup.
 # NOT interpolated: OBSERVABILITY_ALLOWED_REGIONS is read in three states by
 # config.resolve_allowed_regions, so an allowlist an operator SET to an empty value refuses
 # instead of quietly inheriting this list.
-allowed_regions: [us-central1]
+allowed_regions: [asia-southeast1]
 #
 # `profile:` is deliberately ABSENT from this file, and Settings.from_dict refuses it if it
 # comes back. A `${OBSERVABILITY_PROFILE:-local}` placeholder is a TWO-state read: an unset

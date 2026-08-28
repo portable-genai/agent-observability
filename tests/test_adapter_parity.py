@@ -118,7 +118,7 @@ def test_adapter_map_is_exact_and_unknown_profile_fails_closed() -> None:
 def test_the_container_still_fails_closed_on_a_port_with_no_binding() -> None:
     """The container's own fail-closed, exercised with a VALID profile and a gap in the map."""
     settings = Settings(
-        region="us-central1",
+        region="asia-southeast1",
         profile="onprem",
         local=LocalSettings(audit_path=":memory:"),
         adapters={"audit": {"local": _BINDINGS["audit"]["local"]}},

@@ -14,7 +14,7 @@ Hrz5 is the platform's *system of record* for what agents did. It provides three
 | **Audit (rule R2)** | Immutable **Write-Once-Read-Many** storage of already-redacted prompt/response events in a **locked** Cloud Logging bucket | `POST /v1/audit`, `GET /v1/audit` |
 | **FinOps** | Token cost / latency dashboards over a BigQuery export of the audit + trace streams | `infra/terraform` + the [FinOps note](#finops-bigquery-export) |
 
-The deployment region is configurable, defaults to **`us-central1`**, and is validated
+The deployment region is configurable, defaults to **`asia-southeast1`**, and is validated
 against an approved residency allowlist.
 
 ## Documentation
@@ -228,7 +228,7 @@ from one an operator deliberately emptied.
 | `OBSERVABILITY_PROFILE` | none: unset is not a profile | `gcp` \| `local` \| `onprem`, matched exactly. Unset or empty binds the `local` adapters but consents to nothing: the WORM ingest refuses every caller and the service stays on loopback. An unknown or mis-capitalised value fails the boot. |
 | `OBSERVABILITY_LOCAL_AUDIT` | `~/.observability/audit.db` | local SQLite WORM store path (`:memory:` for ephemeral) |
 | `OBSERVABILITY_LOCAL_ANCHOR` | `<audit path>.anchor.json` | external chain-head anchor; put it on another volume |
-| `OBSERVABILITY_ALLOWED_REGIONS` | `us-central1` | residency allowlist; an unlisted `GCP_REGION` fails closed at load, and so does an allowlist set to an empty value |
+| `OBSERVABILITY_ALLOWED_REGIONS` | `asia-southeast1` | residency allowlist; an unlisted `GCP_REGION` fails closed at load, and so does an allowlist set to an empty value |
 | `FIRESTORE_EMULATOR_HOST` | unset | optional: route the local store to the Firestore emulator |
 | `OBSERVABILITY_WORM_BUCKET` | `agent-observability-worm` | locked log bucket id (gcp) |
 | `OBSERVABILITY_LOG_NAME` | `agent-observability-audit` | structured log name (gcp) |
@@ -295,7 +295,7 @@ Multiply token sums by the model's per-token price to get cost per actor / use c
 ## Infrastructure (Terraform)
 
 `infra/terraform/` provisions every managed resource in `var.region` (default
-`us-central1`):
+`asia-southeast1`):
 
 * **Locked WORM log bucket**: `agent-observability-worm`, retention `2557d`,
   `locked = true`. **⚠ Locking is irreversible** (see the banner in `logging_worm.tf`).

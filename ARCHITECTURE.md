@@ -85,7 +85,7 @@ sequenceDiagram
 
 ## Data residency and immutability
 
-Every managed resource is pinned to the selected region (default `us-central1`). The `gcp` audit store
+Every managed resource is pinned to the selected region (default `asia-southeast1`). The `gcp` audit store
 is a *locked* Cloud Logging bucket (retention 2557 days, ~7 years): writes are
 Write-Once-Read-Many and the bucket cannot be unlocked, so Rsk1 cannot tamper with or delete
 its own audit trail. The `local` SQLite stand-in mirrors that guarantee off cloud: SQLite triggers refuse UPDATE

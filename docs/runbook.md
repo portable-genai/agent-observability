@@ -1,7 +1,7 @@
 # Runbook: Hrz5 Agent Observability, Audit & FinOps
 
 Operational notes for deploying and running Hrz5 (`agent-observability`) on GCP in
-`us-central1`. This is a reference build; adapt it to your own change-management and
+`asia-southeast1`. This is a reference build; adapt it to your own change-management and
 model-risk sign-off before any live use. Hrz5 is a control-plane service: it has no
 end-user UI and no LLM/ADK agent, it serialises and stores already-redacted audit events
 and ingests OpenTelemetry traces.
@@ -32,7 +32,7 @@ python -m observability serve --port 8085      # FastAPI on :8085 (Cloud Run set
 The service is deployed to Cloud Run as an ingress-internal service by
 `infra/terraform/cloud_run.tf`; the OTel collector is a separate internal-only Cloud Run
 service (`otel_collector.tf`) that mounts its config from Secret Manager. Both are
-provisioned by the same `terraform apply`. Region defaults to `us-central1`; other
+provisioned by the same `terraform apply`. Region defaults to `asia-southeast1`; other
 deployment inputs are documented in `infra/terraform/variables.tf`.
 
 The dev/test/CI default profile is `local` (SDK-free, offline), and the Makefile, CI and
@@ -49,7 +49,7 @@ arriving with a trailing newline from a config map still selects the profile you
 
 ## 2. Region selection and fail-fast
 
-The Terraform `region` variable defaults to `us-central1` and is guarded by a
+The Terraform `region` variable defaults to `asia-southeast1` and is guarded by a
 `validation` block: an apply against a region outside `allowed_regions` fails immediately
 at `terraform plan`, before anything is created. The WORM log
 bucket, the BigQuery FinOps dataset, the Cloud Run service and the OTel collector are all

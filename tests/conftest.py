@@ -42,7 +42,7 @@ def settings() -> Settings:
     """
     return Settings(
         project_id="test-project",
-        region="us-central1",
+        region="asia-southeast1",
         profile="local",
         max_events=100,
         logging=LoggingSettings(read_back_window_days=30),

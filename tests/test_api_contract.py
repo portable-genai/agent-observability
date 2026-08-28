@@ -20,7 +20,7 @@ def test_healthz(client: TestClient) -> None:
     assert resp.json() == {
         "status": "ok",
         "profile": "local",
-        "region": "us-central1",
+        "region": "asia-southeast1",
         "demo_only": True,
         "production_ready": False,
     }

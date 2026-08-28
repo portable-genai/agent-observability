@@ -12,7 +12,7 @@ adapter family the :class:`~observability.container.Container` binds:
 * ``onprem`` - fail-fast Google Distributed Cloud migration placeholder: constructs
   cleanly and satisfies the Protocol, but every method raises ``NotImplementedError``.
 
-The GCP region is configurable and defaults to ``us-central1``.
+The GCP region is configurable and defaults to ``asia-southeast1``.
 
 **Two security-relevant settings are resolved here and NOWHERE else**, because
 ``${VAR:-default}`` interpolation is a TWO-state read (it cannot tell a variable nobody set
@@ -42,7 +42,7 @@ from hex_service_kit import ConfiguredEmptyError, EnvSetting, read_env_setting
 
 from .envread import setting_or_default
 
-REGION = "us-central1"
+REGION = "asia-southeast1"
 
 #: The ONE environment variable naming the adapter family, read ONLY by
 #: :func:`resolve_profile`. ``tests/test_profile_single_source.py`` fails the build if any
@@ -64,7 +64,7 @@ UNCONSENTED_PROFILE = "unconfigured"
 # validates `var.region` against, enforced a second time here so a deploy that bypassed
 # Terraform (a hand-set GCP_REGION on a running service) still fails closed at app load
 # instead of quietly writing the audit trail into an unapproved region.
-ALLOWED_REGIONS: tuple[str, ...] = ("us-central1",)
+ALLOWED_REGIONS: tuple[str, ...] = ("asia-southeast1",)
 
 
 class ResidencyError(ValueError):

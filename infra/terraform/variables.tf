@@ -9,7 +9,7 @@ variable "project_id" {
 variable "region" {
   type        = string
   description = "Deployment region, validated against allowed_regions (P-03)."
-  default     = "us-central1"
+  default     = "asia-southeast1"
 
   validation {
     condition     = contains(var.allowed_regions, var.region)
@@ -20,7 +20,7 @@ variable "region" {
 variable "allowed_regions" {
   type        = list(string)
   description = "Residency-approved deployment regions."
-  default     = ["us-central1"]
+  default     = ["asia-southeast1"]
 
   validation {
     condition     = length(var.allowed_regions) > 0
@@ -109,7 +109,7 @@ variable "worm_locked" {
 variable "container_image" {
   type        = string
   description = "Cloud Run container image for the Hrz5 service."
-  default     = "us-central1-docker.pkg.dev/REPLACE_ME/hrz/agent-observability:latest"
+  default     = "asia-southeast1-docker.pkg.dev/REPLACE_ME/hrz/agent-observability:latest"
 }
 
 variable "service_audience" {
