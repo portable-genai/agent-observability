@@ -38,6 +38,11 @@ resource "google_kms_crypto_key" "audit" {
 # one of these is how a "CMEK enabled" deploy silently falls back at create time.
 data "google_project" "this" {
   project_id = var.project_id
+
+  # Every data source here reads a service's own answer, so each must wait for the service
+  # to be enabled. On the long-lived project the APIs were already on and the missing
+  # ordering never showed; on a fresh project it is a race the first apply loses.
+  depends_on = [google_project_service.required]
 }
 
 # Service agents are ASKED FOR, never spelled out. A "service-<number>@gcp-sa-<x>" string is a
@@ -50,18 +55,24 @@ data "google_project" "this" {
 # the address is authoritative and the ordering is explicit rather than hoped for.
 data "google_bigquery_default_service_account" "this" {
   project = var.project_id
+
+  depends_on = [google_project_service.required]
 }
 
 # Cloud Logging exposes no service_identity resource; this data source is the authoritative
 # answer to "which agent encrypts this project's logs".
 data "google_logging_project_cmek_settings" "this" {
   project = var.project_id
+
+  depends_on = [google_project_service.required]
 }
 
 resource "google_project_service_identity" "run" {
   provider = google-beta
   project  = var.project_id
   service  = "run.googleapis.com"
+
+  depends_on = [google_project_service.required]
 }
 
 locals {
