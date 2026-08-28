@@ -53,7 +53,7 @@ def _store(
 ]:
     db = str(tmp_path / "audit.db")
     settings = Settings(
-        region="us-central1",
+        region="asia-southeast1",
         profile="local",
         max_events=max_events,
         local=LocalSettings(audit_path=db, anchor_path=anchor or ""),
@@ -165,7 +165,7 @@ def test_truncated_tail_is_caught_by_the_external_anchor(tmp_path: Path) -> None
 def test_without_an_anchor_a_truncated_tail_is_honestly_undetected(tmp_path: Path) -> None:
     """The documented limit, asserted so the docstring cannot drift into overclaiming."""
     settings = Settings(
-        region="us-central1",
+        region="asia-southeast1",
         profile="local",
         max_events=100,
         local=LocalSettings(audit_path=":memory:"),
@@ -320,7 +320,7 @@ def test_an_unanchored_store_never_reports_bare_chain_intact(tmp_path: Path) -> 
     """
     unwitnessed = LocalAppendOnlyAuditAdapter(
         Settings(
-            region="us-central1",
+            region="asia-southeast1",
             profile="local",
             max_events=100,
             local=LocalSettings(audit_path=":memory:"),  # no file, so no witness
@@ -367,7 +367,7 @@ def test_without_an_anchor_a_forged_prune_is_honestly_undetected(tmp_path: Path)
     closes tail truncation.
     """
     settings = Settings(
-        region="us-central1",
+        region="asia-southeast1",
         profile="local",
         max_events=100,
         local=LocalSettings(audit_path=":memory:"),

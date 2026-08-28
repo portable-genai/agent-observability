@@ -3,7 +3,7 @@
 Catalog system **Hrz5** (group `hrz`). The platform's system of record for what agents did:
 OpenTelemetry tracing, token cost / latency FinOps, and compliance-grade immutable
 (Write-Once-Read-Many) prompt/response audit. A mandatory platform dependency of the Rsk1
-Compliance Assistant (`compliance-advisory`). Region pinned to `us-central1`.
+Compliance Assistant (`compliance-advisory`). Region pinned to `asia-southeast1`.
 
 ## 1. Scope
 

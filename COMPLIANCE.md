@@ -13,7 +13,7 @@ not applicable; those are marked honestly rather than padded.
 | **R3** | Agent registration / discovery | n/a for Hrz5 (owned by Hrz3 `agent-registry`). |
 | **R4** | Eval / model-risk gate | Hrz4-style offline gate (`eval/run_eval.py`) checks audit-trail integrity (parity, provenance, redaction, ordering) on every change. |
 | **R5** | Maker-checker on consequential output | n/a: Hrz5 produces no agent output; it records the maker-checker `decision` (`escalated`) emitted upstream. |
-| **R6** | Data residency | Every managed resource uses the allowlisted deployment region; default `us-central1`. The allowlist is enforced three times: `terraform plan` validates `var.region` against `var.allowed_regions`, the `gcp.resourceLocations` Org Policy (`infra/terraform/org_policy.tf`) refuses out-of-region creates that bypass Terraform, and the app itself fails closed at load (`observability.config.ResidencyError`). |
+| **R6** | Data residency | Every managed resource uses the allowlisted deployment region; default `asia-southeast1`. The allowlist is enforced three times: `terraform plan` validates `var.region` against `var.allowed_regions`, the `gcp.resourceLocations` Org Policy (`infra/terraform/org_policy.tf`) refuses out-of-region creates that bypass Terraform, and the app itself fails closed at load (`observability.config.ResidencyError`). |
 
 ## General principles
 

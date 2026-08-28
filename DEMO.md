@@ -7,7 +7,7 @@ CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwr
   buffer you can seed, read back with provenance, append to, filter, and roll up for
   FinOps. Runs **fully offline** (no Google Cloud, no API key, no emulators) on SQLite.
   It demonstrates the contract, not the managed profile's compliance-grade WORM control.
-- **Demo B (GCP)** the same service against the **real managed stack** in `us-central1`:
+- **Demo B (GCP)** the same service against the **real managed stack** in `asia-southeast1`:
   a locked Cloud Logging WORM bucket (~7y retention) plus a BigQuery FinOps export. Same
   REST contract, different backend.
 
@@ -25,7 +25,7 @@ CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwr
 | `git` | yes | yes | clone the repo |
 | **Python 3.12+** | yes | yes | the package pins `>=3.12` |
 | `curl` | for the REST variant | yes | drive the REST endpoints |
-| A GCP project + `gcloud` | no | yes | billing enabled; `us-central1` available |
+| A GCP project + `gcloud` | no | yes | billing enabled; `asia-southeast1` available |
 | Terraform | no | yes | provisions the locked WORM bucket, log sink, BigQuery dataset |
 | `[gcp]` extra installed | no | yes | `google-cloud-logging`, `google-cloud-bigquery` |
 
@@ -145,7 +145,7 @@ curl -s 'localhost:8085/v1/audit?actor=analyst@bank.example&limit=20' | python -
 
 ## 3. Demo B (GCP): the managed WORM + FinOps stack
 
-Same REST contract, real managed services in `us-central1`: a **locked** Cloud Logging
+Same REST contract, real managed services in `asia-southeast1`: a **locked** Cloud Logging
 WORM bucket (~7y retention) and a BigQuery FinOps export. Follow [README "Infrastructure (Terraform)"](README.md#infrastructure-terraform)
 for the authoritative steps; the short version:
 
@@ -221,7 +221,7 @@ price = cost per actor / use case; p95 latency via `APPROX_QUANTILES`).
   no separate metering pipeline.
 - **No lock-in.** Ports & adapters: `local` runs the whole thing off-cloud, `onprem` fails
   fast (never fabricates), `gcp` is the managed compliance store. Everything is pinned to
-  `us-central1` (P-03).
+  `asia-southeast1` (P-03).
 
 ---
 
@@ -235,7 +235,7 @@ price = cost per actor / use case; p95 latency via `APPROX_QUANTILES`).
 | Port 8085 already in use | `make run PORT=9000` (then curl `localhost:9000`), or `agent-observability serve --port 9000`. |
 | CLI exits **2** with a migration message | You are on `OBSERVABILITY_PROFILE=onprem` (fail-fast placeholder). Use `local` (Demo A) or `gcp` (Demo B). |
 | `ModuleNotFoundError: google.cloud` on gcp | `pip install -e '.[gcp,dev]'`; the SDK is only in the `[gcp]` extra. |
-| GCP region / permission errors | Confirm `us-central1` and the app SA's roles; see [README "Infrastructure (Terraform)"](README.md#infrastructure-terraform). |
+| GCP region / permission errors | Confirm `asia-southeast1` and the app SA's roles; see [README "Infrastructure (Terraform)"](README.md#infrastructure-terraform). |
 
 **Stop / clean up:** Ctrl-C `make run`. The guided script writes only an ephemeral temp-dir
 SQLite file (safe to delete). For GCP, the locked bucket and its audit trail are immutable

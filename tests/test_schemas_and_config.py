@@ -66,7 +66,7 @@ def test_settings_load_from_repo_yaml(monkeypatch) -> None:
     monkeypatch.setenv("OBSERVABILITY_PROFILE", "local")
     cfg_path = Path(__file__).resolve().parents[1] / "config" / "settings.yaml"
     settings = Settings.load(cfg_path)
-    assert settings.region == REGION == "us-central1"
+    assert settings.region == REGION == "asia-southeast1"
     assert settings.profile == "local"
     assert settings.profile_explicit is True
     assert settings.logging.retention_days == 2557  # ~7y WORM (rule R2)

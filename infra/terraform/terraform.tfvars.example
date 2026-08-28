@@ -1,5 +1,5 @@
 # Copy to terraform.tfvars and set your project id. Everything else has a concrete
-# us-central1 default; only project_id (and optionally the container image) is per-tenant.
+# asia-southeast1 default; only project_id (and optionally the container image) is per-tenant.
 
 project_id = "your-gcp-project"
 service_audience = "https://observability-REPLACE.run.app"
@@ -11,10 +11,10 @@ release_approver_service_accounts = [
   "model-risk-reviewer@your-gcp-project.iam.gserviceaccount.com",
 ]
 
-# region is pinned to us-central1 and validated; no need to set it.
+# region is pinned to asia-southeast1 and validated; no need to set it.
 # retention_days defaults to 2557 (~7 years). LOCKING IS IRREVERSIBLE — see logging_worm.tf.
 
-# container_image = "us-central1-docker.pkg.dev/your-gcp-project/hrz/agent-observability:latest"
+# container_image = "asia-southeast1-docker.pkg.dev/your-gcp-project/hrz/agent-observability:latest"
 
 # OTLP collector (trace ingest). The image defaults to otel/opentelemetry-collector-contrib;
 # pin it to a digest in production. Grant the verticals' runtime SAs invoke access so they
@@ -28,7 +28,7 @@ release_approver_service_accounts = [
 # --------------------------------------------------------------------------- #
 # Residency allowlist. `region` must appear here or `terraform plan` fails, and the app
 # re-validates the same list at load (OBSERVABILITY_ALLOWED_REGIONS).
-# allowed_regions = ["us-central1"]
+# allowed_regions = ["asia-southeast1"]
 
 # CMEK: the key is created in `region` and bound per service (logging bucket, BigQuery,
 # both Cloud Run services). Rotation is yours to set; 90 days by default.

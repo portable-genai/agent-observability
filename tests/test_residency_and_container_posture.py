@@ -50,7 +50,7 @@ def test_region_outside_the_residency_allowlist_fails_closed_at_load() -> None:
 
 def test_empty_residency_allowlist_is_an_error_not_permission_to_use_any_region() -> None:
     with pytest.raises(ResidencyError):
-        Settings(region="us-central1", allowed_regions=())
+        Settings(region="asia-southeast1", allowed_regions=())
 
 
 @pytest.mark.parametrize("value", ("", "   ", ",", " , "))
