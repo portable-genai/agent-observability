@@ -19,7 +19,7 @@ certifi==2026.7.22
     # via
     #   httpcore
     #   httpx
-click==8.4.2
+click==8.5.0
     # via uvicorn
 fastapi==0.141.1
     # via agent-observability (pyproject.toml)
@@ -27,7 +27,7 @@ h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@20ba3bece41c069a135151b9630d02dc1c69169f
+hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@418b969d79edc70e2b9d99856c5b48515f93e6f8
     # via agent-observability (pyproject.toml)
 httpcore==1.0.9
     # via httpx
@@ -59,11 +59,11 @@ pathspec==1.1.1
     # via mypy
 pluggy==1.6.0
     # via pytest
-pydantic==2.13.4
+pydantic==2.13.5
     # via
     #   agent-observability (pyproject.toml)
     #   fastapi
-pydantic-core==2.46.4
+pydantic-core==2.46.5
     # via pydantic
 pygments==2.21.0
     # via
@@ -85,7 +85,7 @@ shellingham==1.5.4
     # via typer
 starlette==1.6.0
     # via fastapi
-typer==0.27.1
+typer==0.27.2
     # via agent-observability (pyproject.toml)
 types-pyyaml==6.0.12.20260815
     # via agent-observability (pyproject.toml)
@@ -108,5 +108,5 @@ uvloop==0.22.1
     # via uvicorn
 watchfiles==1.2.0
     # via uvicorn
-websockets==17.0.1
+websockets==17.1
     # via uvicorn
