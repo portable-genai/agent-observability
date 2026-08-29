@@ -156,8 +156,8 @@ def test_vpc_sc_perimeter_ships_dry_run_first_and_is_promoted_by_one_variable() 
 def test_posture_deviations_alert_instead_of_passing_silently() -> None:
     monitoring = _tf("monitoring.tf")
 
-    assert "hrz_agent_observability_vpc_sc_dry_run_violations" in monitoring
-    assert "hrz_agent_observability_residency_policy_violations" in monitoring
+    assert "agent_observability_vpc_sc_dry_run_violations" in monitoring
+    assert "agent_observability_residency_policy_violations" in monitoring
     assert "constraints/gcp.resourceLocations" in monitoring
     assert "constraints/gcp.restrictNonCmekServices" in monitoring
     assert monitoring.count('resource "google_monitoring_alert_policy"') >= 4
