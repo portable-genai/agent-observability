@@ -13,7 +13,7 @@
 
 locals {
   vpc_sc_enabled       = var.access_policy_id != ""
-  vpc_sc_perimeter_key = "hrz_agent_observability"
+  vpc_sc_perimeter_key = "agent_observability"
 }
 
 resource "google_access_context_manager_service_perimeter" "audit" {

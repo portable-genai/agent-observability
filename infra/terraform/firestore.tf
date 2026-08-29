@@ -6,7 +6,7 @@
 
 resource "google_firestore_database" "audit_idempotency" {
   project     = var.project_id
-  name        = "hrz-observability-idempotency"
+  name        = "agent-observability-idempotency"
   location_id = var.region
   type        = "FIRESTORE_NATIVE"
 
