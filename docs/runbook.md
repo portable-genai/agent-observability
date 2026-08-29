@@ -22,7 +22,7 @@ terraform plan
 terraform apply
 
 # 2. Export the outputs consumers and the runtime need.
-export HRZ_OBSERVABILITY_URL="$(terraform output -raw service_uri)"   # Rsk1 posts audit here
+export OBSERVABILITY_URL="$(terraform output -raw service_uri)"   # Rsk1 posts audit here
 export OBSERVABILITY_WORM_BUCKET="$(terraform output -raw worm_bucket_id)"
 export OBSERVABILITY_BQ_DATASET="$(terraform output -raw finops_dataset)"
 export OTEL_EXPORTER_OTLP_ENDPOINT="$(terraform output -raw otlp_endpoint)" # agents tag spans here
