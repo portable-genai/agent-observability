@@ -86,7 +86,7 @@ def test_no_legacy_catalog_ids_anywhere_in_the_tree() -> None:
 def test_the_scan_would_actually_fail_on_a_legacy_id(tmp_path: Path) -> None:
     """A guard that cannot fail guards nothing."""
     assert _LEGACY_RE.search("catalog system " + "A" + "5" + " observability")
-    assert _LEGACY_RE.search("services (" + "C" + "1" + ") set as HRZ_OBSERVABILITY_URL")
+    assert _LEGACY_RE.search("services (" + "C" + "1" + ") set as OBSERVABILITY_URL")
     assert not _LEGACY_RE.search("Hrz5 Rsk1 A55 XA5 A5x A-5")
 
 

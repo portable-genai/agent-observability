@@ -138,7 +138,7 @@ resource "google_cloud_run_v2_service_iam_member" "release_approvers" {
 }
 
 output "service_uri" {
-  description = "Internal URL other platform services (Rsk1) set as HRZ_OBSERVABILITY_URL."
+  description = "Internal URL other platform services (Rsk1) set as OBSERVABILITY_URL."
   value       = google_cloud_run_v2_service.observability.uri
 }
 

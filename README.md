@@ -38,7 +38,7 @@ Rsk1 does **not** write Cloud Logging directly; it routes the record through **H
 ```mermaid
 flowchart LR
   Rsk1["Rsk1 (compliance-advisory)"] --> adapter["RemoteAuditAdapter.record(AuditEvent)"]
-  adapter -->|"POST {HRZ_OBSERVABILITY_URL}/v1/audit<br/>default http://localhost:8085"| Hrz5["Hrz5 service"]
+  adapter -->|"POST {OBSERVABILITY_URL}/v1/audit<br/>default http://localhost:8085"| Hrz5["Hrz5 service"]
   Hrz5 -->|"202 Accepted"| worm["locked Cloud Logging WORM bucket"]
 ```
 
@@ -211,7 +211,7 @@ make check          # complete offline gate
 `agent-observability read` prints the immutable audit records with regulator-grade
 provenance (`[source_id, REGULATOR vX p.N] url`). Under `onprem` the same command exits
 `2` with the migration message (the placeholder never fabricates a record). Point Rsk1 at
-the service with `export HRZ_OBSERVABILITY_URL=http://localhost:8085`.
+the service with `export OBSERVABILITY_URL=http://localhost:8085`.
 
 ---
 

@@ -131,7 +131,7 @@ Both `/v1/audit` routes require service-to-service auth (§6.1); `/healthz` stay
 keys are ignored so the contract tolerates additive changes. OTLP trace ingest is infra
 (the OTel collector), deliberately not in this HTTP contract.
 
-Rsk1's env var to reach this service: `HRZ_OBSERVABILITY_URL` (default `http://localhost:8085`).
+Rsk1's env var to reach this service: `OBSERVABILITY_URL` (default `http://localhost:8085`).
 
 ### 6.1 Service-to-service auth
 
