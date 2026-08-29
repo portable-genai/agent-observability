@@ -10,7 +10,7 @@
 # Dedicated runtime SA, least privilege for the three OpenTelemetry signals.
 resource "google_service_account" "otel_collector" {
   project      = var.project_id
-  account_id   = "hrz-otel-collector"
+  account_id   = "otel-collector"
   display_name = "Hrz5 OpenTelemetry Collector runtime SA"
 }
 
@@ -36,7 +36,7 @@ resource "google_project_iam_member" "otel_log_writer" {
 # is versioned and mountable without baking it into the image.
 resource "google_secret_manager_secret" "otel_config" {
   project   = var.project_id
-  secret_id = "hrz-otel-collector-config"
+  secret_id = "otel-collector-config"
 
   replication {
     user_managed {
@@ -65,7 +65,7 @@ resource "google_cloud_run_v2_service" "otel_collector" {
   deletion_protection = var.cloud_run_deletion_protection
 
   project  = var.project_id
-  name     = "hrz-otel-collector"
+  name     = "otel-collector"
   location = var.region # us-central1 (P-03)
 
   # Internal-only: the collector is reachable from platform services in the VPC, never
@@ -122,7 +122,7 @@ resource "google_cloud_run_v2_service" "otel_collector" {
 }
 
 # Only the named caller service accounts may invoke the collector (defence in depth atop
-# internal ingress). Compose with plan-hrz-s2s-auth for the HTTP API surface.
+# internal ingress). Compose with the service-to-service auth plan for the HTTP API surface.
 resource "google_cloud_run_v2_service_iam_member" "otel_invokers" {
   for_each = toset(var.otel_caller_service_accounts)
 

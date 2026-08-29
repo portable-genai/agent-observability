@@ -63,7 +63,7 @@ locals {
 
 resource "google_logging_metric" "service_errors" {
   project = var.project_id
-  name    = "hrz_agent_observability_service_errors"
+  name    = "agent_observability_service_errors"
   filter = join(" AND ", [
     "resource.type=\"cloud_run_revision\"",
     "resource.labels.service_name=\"${google_cloud_run_v2_service.observability.name}\"",
@@ -200,7 +200,7 @@ resource "google_monitoring_dashboard" "agent_observability" {
 # signal, and a quiet window is the precondition for promoting to enforced.
 resource "google_logging_metric" "vpc_sc_dry_run_violations" {
   project = var.project_id
-  name    = "hrz_agent_observability_vpc_sc_dry_run_violations"
+  name    = "agent_observability_vpc_sc_dry_run_violations"
   filter = join(" AND ", [
     "log_id(\"cloudaudit.googleapis.com/policy\")",
     "protoPayload.metadata.dryRun=\"true\"",
@@ -246,7 +246,7 @@ resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
 # a CMEK denial, both surface as Org Policy violations in the admin activity log.
 resource "google_logging_metric" "residency_policy_violations" {
   project = var.project_id
-  name    = "hrz_agent_observability_residency_policy_violations"
+  name    = "agent_observability_residency_policy_violations"
   filter = join(" AND ", [
     "log_id(\"cloudaudit.googleapis.com/activity\")",
     "protoPayload.status.message:(\"constraints/gcp.resourceLocations\" OR \"constraints/gcp.restrictNonCmekServices\")",
