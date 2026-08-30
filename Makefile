@@ -11,7 +11,7 @@ export OBSERVABILITY_PROFILE
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install lint format-check fmt typecheck test eval seed smoke run demo demo-selftest portability-demo rename-selftest check docker tf-init tf-plan clean
+.PHONY: help install lint format-check fmt typecheck test eval seed smoke run demo demo-selftest portability-demo rename-selftest check docker tf-init tf-plan clean prove-exposure
 
 help: ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -63,7 +63,14 @@ portability-demo: ## Run the bounded profile, runtime and JSON-contract proof.
 rename-selftest: ## Apply a rename in a clean copy, install locks fresh and run its full gate.
 	$(PY) scripts/rename_fork_selftest.py
 
-check: lint format-check typecheck test eval demo-selftest portability-demo ## Complete offline gate.
+prove-exposure: ## Drive the whole exposure matrix over a REAL socket from a REAL LAN peer.
+	# The derivation this backs is gated; until now the peer proof was not, so a script that
+	# could only be run by hand stood behind a published claim. It refuses rather than skips
+	# when this host has no non-loopback address, because a proof that quietly declines to run
+	# reports the same green as one that ran.
+	bash scripts/prove-exposure-matrix.sh
+
+check: lint format-check typecheck test eval demo-selftest portability-demo prove-exposure ## Complete offline gate.
 
 docker: ## Build the container image.
 	docker build -t $(IMAGE) .
