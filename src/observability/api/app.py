@@ -47,6 +47,12 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from hex_service_kit import AuditChainError, read_env_setting
+from hex_service_kit.capabilities import (
+    AssuranceLevel,
+    Capability,
+    CapabilityManifest,
+    CapabilityMode,
+)
 from hex_service_kit.web import add_loopback_exposure_guard
 
 from .. import __version__
@@ -58,7 +64,6 @@ from ..schemas import (
     AuditAccepted,
     AuditEventModel,
     CapabilityManifestModel,
-    CapabilityModel,
     HealthResponse,
     ReleaseApprovalRequest,
 )
@@ -314,6 +319,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     return app
 
 
+def _capability(
+    *,
+    name: str,
+    available: bool,
+    mode: str,
+    assurance: str,
+    provider: str = "",
+    reason: str = "",
+    required_for_production: bool = False,
+) -> Capability:
+    """Build a kit :class:`Capability` from this service, VALIDATING both vocabularies.
+
+    The enum constructors are the point rather than a formality: a mode or an assurance level
+    this fleet does not define now raises here, instead of being served as a string that reads
+    like it means something. The strings themselves are unchanged on the wire.
+    """
+    return Capability(
+        name=name,
+        available=available,
+        mode=CapabilityMode(mode),
+        assurance=AssuranceLevel(assurance),
+        provider=provider,
+        reason=reason,
+        required_for_production=required_for_production,
+    )
+
+
 def _capability_manifest(settings: Settings) -> CapabilityManifestModel:
     # Every read below goes through the commons three-state reader, and every one of them
     # collapses UNSET and SET-AND-EMPTY deliberately: an attestation reference nobody set and
@@ -338,7 +370,7 @@ def _capability_manifest(settings: Settings) -> CapabilityManifestModel:
         return "attested" if managed and refs[name] else "not-attested"
 
     items = [
-        CapabilityModel(
+        _capability(
             name="audit-api",
             available=demo_only or (managed and s2s_ready),
             mode="local" if demo_only else ("managed" if managed else "disabled"),
@@ -358,7 +390,7 @@ def _capability_manifest(settings: Settings) -> CapabilityManifestModel:
             required_for_production=True,
         ),
         *[
-            CapabilityModel(
+            _capability(
                 name=name,
                 available=managed and configured,
                 mode="managed" if managed else "disabled",
@@ -395,18 +427,17 @@ def _capability_manifest(settings: Settings) -> CapabilityManifestModel:
             )
         ],
     ]
-    production_ready = not demo_only and all(
-        item.available and item.assurance == "attested"
-        for item in items
-        if item.required_for_production
-    )
-    return CapabilityManifestModel(
-        service="agent-observability",
-        profile=settings.profile,
-        region=settings.region,
-        capabilities=items,
-        demo_only=demo_only,
-        production_ready=production_ready,
+    # production_ready is NOT recomputed here: the kit manifest derives it from the
+    # very capabilities just built, so the served flag and the rule behind it cannot
+    # disagree. It used to be written out a second time, right above this line.
+    return CapabilityManifestModel.from_manifest(
+        CapabilityManifest(
+            service="agent-observability",
+            profile=settings.profile,
+            region=settings.region,
+            capabilities=tuple(items),
+            demo_only=demo_only,
+        )
     )
 
 
