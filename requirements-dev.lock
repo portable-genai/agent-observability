@@ -79,7 +79,7 @@ pyyaml==6.0.3
     #   uvicorn
 rich==15.0.0
     # via typer
-ruff==0.15.18
+ruff==0.16.4
     # via agent-observability (pyproject.toml)
 shellingham==1.5.4
     # via typer
