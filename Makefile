@@ -23,6 +23,12 @@ install: ## Install the package with dev extras into the active environment.
 lint: ## Ruff lint.
 	ruff check src tests eval scripts
 
+# `ruff format` covers MARKDOWN as well as Python from ruff 0.16 onward, where Markdown
+# formatting left preview. Under the previous 0.15 pin, `ruff format --check scripts` walked
+# straight past `scripts/README.md` (naming it explicitly was an error: "Markdown formatting is
+# experimental, enable preview mode"), so this target read 62 files; at 0.16.4 it reads 63 and
+# the README is format-checked like anything else. A Markdown file added under src/, tests/,
+# eval/ or scripts/ is now the formatter's business and can turn this target red on its own.
 format-check: ## Verify Ruff formatting without writing files.
 	ruff format --check src tests eval scripts
 
