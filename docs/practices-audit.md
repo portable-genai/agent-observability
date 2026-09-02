@@ -88,6 +88,6 @@ quality-of-adoption gaps this audit surfaces, none load-bearing, are:
   and its remaining half is a deployment task, not a code task.
 
 There is also one standing infrastructure blocker unrelated to this repository's code: the GitHub
-account is billing-blocked, so no hosted Actions run can start and every CI-execution claim in this
+hosted CI did not exist until GitHub Actions became the fleet's gate on 2026-09-02 and every CI-execution claim in this
 projection is evidenced by running the same commands locally instead.
 
