@@ -1,7 +1,7 @@
 """Contract: the ``local`` and ``onprem`` adapters are structural parity of the port.
 
-For the one persistence port Hrz5 declares (``AuditSinkPort``), this iterates the adapter
-map and, for both the ``onprem`` and ``local`` profiles, imports + constructs the bound
+For the one persistence port agent-observability declares (``AuditSinkPort``), this iterates the
+adapter map and, for both the ``onprem`` and ``local`` profiles, imports + constructs the bound
 class (which must build cleanly with **no Google Cloud SDK** installed), then asserts:
 
   1. the constructed instance satisfies its runtime_checkable Protocol (isinstance), and

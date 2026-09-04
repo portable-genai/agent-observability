@@ -1,10 +1,11 @@
-"""The zero-secret opening must be bounded where Hrz5 actually SERVES, not in an entry point.
+"""The zero-secret opening must be bounded where agent-observability actually SERVES, not in an
+entry point.
 
-Hrz5's WORM ingest is the platform's evidence of record: `POST /v1/audit` is where every
-agent's immutable audit row lands. Under the `local` profile with `OBSERVABILITY_S2S_TOKEN`
-unset the ingest is deliberately open, because the offline gate runs with zero secrets, and
-five documents bound that opening with the words "loopback dev only". Nothing enforced it.
-There was no bind guard at all in this repo, and the shipped entry point is the Dockerfile's
+agent-observability's WORM ingest is the platform's evidence of record: `POST /v1/audit` is where
+every agent's immutable audit row lands. Under the `local` profile with `OBSERVABILITY_S2S_TOKEN`
+unset the ingest is deliberately open, because the offline gate runs with zero secrets, and five
+documents bound that opening with the words "loopback dev only". Nothing enforced it. There was no
+bind guard at all in this repo, and the shipped entry point is the Dockerfile's
 
     CMD exec uvicorn observability.api.app:app --host 0.0.0.0 --port ${PORT}
 

@@ -38,7 +38,8 @@ from observability.container import Container, _load
 CONFIG_PATH = "config/settings.yaml"
 
 #: Every port name in ``settings.adapters`` mapped to its Protocol. Hand maintained on purpose:
-#: the tests below fail loudly when it stops matching either registry it straddles. Hrz5 is a
+#: the tests below fail loudly when it stops matching either registry it straddles.
+#: agent-observability is a
 #: control-plane service with ONE persistence port; that is the honest port set, not a shortfall.
 PORT_PROTOCOLS: dict[str, type] = {
     "audit": ports.AuditSinkPort,
@@ -79,7 +80,8 @@ def _exported_protocols() -> dict[str, type]:
     """Every runtime_checkable Protocol :mod:`observability.ports` exports, by name.
 
     The ports package also exports the caller-authentication vocabulary and a placeholder
-    error, which declare no Protocol because Hrz5 binds no identity ADAPTER. Filtering on
+    error, which declare no Protocol because agent-observability binds no identity ADAPTER.
+    Filtering on
     ``_is_runtime_protocol`` keeps those out without a hand-written exemption list that would
     need editing every time the vocabulary grows.
     """
@@ -183,7 +185,8 @@ def test_no_binding_names_a_profile_nothing_may_select() -> None:
 def test_shipped_binding_satisfies_its_protocol(profile: str, port_name: str) -> None:
     """Every family, ``gcp`` included, constructs offline: its SDK imports are lazy by contract.
 
-    Sweeping all three rather than only the SDK-free pair is deliberate here. Hrz5 is the audit
+    Sweeping all three rather than only the SDK-free pair is deliberate here. agent-observability is
+    the audit
     store every other system writes to, so a managed binding that cannot even be constructed is
     a deployment that loses the evidence trail, and the lazy-import discipline is what makes the
     check possible without credentials.

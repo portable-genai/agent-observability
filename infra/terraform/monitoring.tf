@@ -3,7 +3,7 @@
 resource "google_monitoring_service" "observability" {
   project      = var.project_id
   service_id   = "agent-observability"
-  display_name = "Hrz5 Agent Observability"
+  display_name = "agent-observability Agent Observability"
 
   # CLOUD_RUN, not "cloud_run_revision". The latter is the MONITORED RESOURCE type used in
   # metric filters, and it is not a Monitoring service type — the API rejects it with
@@ -79,7 +79,7 @@ resource "google_logging_metric" "service_errors" {
 
 resource "google_monitoring_alert_policy" "service_errors" {
   project      = var.project_id
-  display_name = "Hrz5 service errors"
+  display_name = "agent-observability service errors"
   combiner     = "OR"
 
   conditions {
@@ -100,14 +100,14 @@ resource "google_monitoring_alert_policy" "service_errors" {
   notification_channels = var.alert_notification_channels
 
   documentation {
-    content   = "Inspect Hrz5 structured logs, verify WORM audit writes, then check OTLP exporter health and queue saturation."
+    content   = "Inspect agent-observability structured logs, verify WORM audit writes, then check OTLP exporter health and queue saturation."
     mime_type = "text/markdown"
   }
 }
 
 resource "google_monitoring_alert_policy" "slo_burn" {
   project      = var.project_id
-  display_name = "Hrz5 availability SLO fast burn"
+  display_name = "agent-observability availability SLO fast burn"
   combiner     = "OR"
 
   conditions {
@@ -132,7 +132,7 @@ resource "google_monitoring_alert_policy" "slo_burn" {
 resource "google_monitoring_dashboard" "agent_observability" {
   project = var.project_id
   dashboard_json = jsonencode({
-    displayName = "Hrz5 Agent Observability — SRE"
+    displayName = "agent-observability Agent Observability — SRE"
     mosaicLayout = {
       columns = 12
       tiles = [
@@ -216,7 +216,7 @@ resource "google_logging_metric" "vpc_sc_dry_run_violations" {
 
 resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
   project      = var.project_id
-  display_name = "Hrz5 VPC-SC dry-run violations"
+  display_name = "agent-observability VPC-SC dry-run violations"
   combiner     = "OR"
 
   conditions {
@@ -261,7 +261,7 @@ resource "google_logging_metric" "residency_policy_violations" {
 
 resource "google_monitoring_alert_policy" "residency_posture" {
   project      = var.project_id
-  display_name = "Hrz5 residency or CMEK posture violation"
+  display_name = "agent-observability residency or CMEK posture violation"
   combiner     = "OR"
 
   conditions {

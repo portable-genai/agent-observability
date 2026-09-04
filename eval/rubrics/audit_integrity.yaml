@@ -1,4 +1,4 @@
-# Hrz5 audit-integrity rubric — the WORM promotion bar (rule R2 / P-08).
+# agent-observability-integrity rubric — the WORM promotion bar (rule R2 / P-08).
 # The offline gate (eval/run_eval.py) drives the local SQLite WORM stand-in and checks
 # that the immutable trail round-trips without loss. All thresholds are 1.00: an audit
 # store that loses or mutates a record is not fit for a regulated deployment.
@@ -17,7 +17,7 @@ companion_metrics:
     threshold: 1.00
     description: >
       Only redacted_* fields are stored; the schema has no raw-PII column (rule R1,
-      P-04). Hrz5 never redacts, it serialises and stores already-redacted text.
+      P-04). agent-observability never redacts, it serialises and stores already-redacted text.
   newest_first_order:
     threshold: 1.00
     description: >

@@ -1,6 +1,6 @@
-# Demo scripts: Hrz5 Agent Observability, Audit & FinOps
+# Demo scripts: `agent-observability` Agent Observability, Audit & FinOps
 
-Hrz5 is a **platform service** (REST API + CLI, no web UI), so the demo is terminal /
+`agent-observability` is a **platform service** (REST API + CLI, no web UI), so the demo is terminal /
 curl-based, not browser-based. Everything here is SDK-free and runs against the in-process
 `local` stack (the bounded append-only-by-API SQLite demo buffer): **no Google Cloud, no API key, no
 emulators**. Run from the repo root with the package and test fixtures on the path:
@@ -29,7 +29,7 @@ to press **Enter**, then runs the real CLI/adapter call and prints the artifact.
 steps are: seed -> regulator pull (read-back) -> append + prove WORM -> scoped pull (filter
 by actor) -> FinOps rollup -> `onprem` fail-fast.
 
-There is **no browser** (Hrz5 has no UI), so unlike the cdd-sow template there is no
+There is **no browser** (`agent-observability` has no UI), so unlike the cdd-sow template there is no
 Playwright step. To self-run with no prompts (CI / recording), set `DEMO_AUTO=1`:
 
 ```bash

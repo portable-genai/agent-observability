@@ -38,7 +38,8 @@ def test_audit_event_model_round_trips_through_domain() -> None:
 
 
 def test_model_parses_c1_to_jsonable_payload() -> None:
-    # Simulate exactly what Rsk1's remote_audit adapter POSTs: to_jsonable(AuditEvent).
+    # Simulate exactly what compliance-advisory's remote_audit adapter POSTs:
+    # to_jsonable(AuditEvent).
     event = AuditEvent(
         action="ask",
         actor="x",

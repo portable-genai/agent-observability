@@ -1,6 +1,6 @@
 # On-prem migration (exit / portability): General Principle P-02
 
-The whole point of the ports-and-adapters shape is that Hrz5's exit story is **demonstrable,
+The whole point of the ports-and-adapters shape is that `agent-observability`'s exit story is **demonstrable,
 not aspirational**. Switching from the managed GCP stack to a sovereign / on-premise stack
 is a one-line profile change (`OBSERVABILITY_PROFILE=onprem`) plus filling in the adapter
 body. The domain core, the serialization, the FastAPI app, the CLI and the auth wiring do
@@ -25,7 +25,7 @@ interface parity, and proves it is fail-fast.
 
 ## The migration checklist
 
-Hrz5 is a single-port service, so the migration is a single, bounded adapter body (the only
+`agent-observability` is a single-port service, so the migration is a single, bounded adapter body (the only
 file that changes):
 
 | Port | On-prem file | What to implement |

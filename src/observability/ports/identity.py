@@ -15,10 +15,10 @@ answers it, and two things that look like they do, do not:
 The scheme bound to the caller-identity port is the only thing that knows, so it says so here,
 and the guard reads the answer from the binding rather than inferring it from something else.
 
-Hrz5 has NO end user. Its callers are SERVICES: agents routing an immutable audit record, and
-release approvers stamping a maker-checker sign-off. So the noun here is the CALLER, where the
-same rule in ``hex-service-template`` and Hrz7 says END USER. The rule itself is identical, and
-so is the defect it removes.
+agent-observability has NO end user. Its callers are SERVICES: agents routing an immutable audit
+record, and release approvers stamping a maker-checker sign-off. So the noun here is the CALLER,
+where the same rule in ``hex-service-template`` and human-review-console says END USER. The rule
+itself is identical, and so is the defect it removes.
 
 Three answers, and the difference between the first two is the whole point:
 

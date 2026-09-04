@@ -1,4 +1,4 @@
-# Hrz5 Agent Observability, Audit & FinOps (hrz) — runtime configuration.
+# agent-observability Agent Observability, Audit & FinOps — runtime configuration.
 #
 # Switch the whole backend by setting OBSERVABILITY_PROFILE:
 #   gcp    -> Cloud Logging locked-bucket WORM adapter (needs the [gcp] extra installed)

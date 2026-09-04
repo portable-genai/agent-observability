@@ -1,4 +1,4 @@
-# Hrz5 FAQs
+# `agent-observability` FAQs
 
 Use the guide that matches your role:
 

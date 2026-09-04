@@ -39,7 +39,7 @@ release_approver_service_accounts = [
 
 # VPC-SC. The perimeter is inert until you supply your Access Context Manager policy id.
 # It then applies in DRY RUN: violations are logged and allowed, and the
-# "Hrz5 VPC-SC dry-run violations" alert is the readiness signal. Promote only after a
+# "agent-observability VPC-SC dry-run violations" alert is the readiness signal. Promote only after a
 # quiet window.
 # access_policy_id     = "123456789012"
 # vpc_sc_access_levels = ["accessPolicies/123456789012/accessLevels/corp_managed_devices"]

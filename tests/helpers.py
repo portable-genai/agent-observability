@@ -10,7 +10,9 @@ def sample_event(
     decision: str = "allowed",
     event_id: str = "",
 ) -> dict[str, object]:
-    """A canonical AuditEvent body, shaped exactly like Rsk1's to_jsonable(AuditEvent)."""
+    """A canonical AuditEvent body, shaped exactly like compliance-advisory's
+    to_jsonable(AuditEvent).
+    """
     return {
         "action": action,
         "actor": actor,

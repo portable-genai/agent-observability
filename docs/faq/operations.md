@@ -1,6 +1,6 @@
 # Operations and features FAQ
 
-## Is Hrz5 a browser dashboard?
+## Is `agent-observability` a browser dashboard?
 
 No. It is a control-plane REST API, CLI and infrastructure service. Analytics are exported
 to BigQuery for institution-owned dashboards; UI is intentionally not part of this repo.
@@ -14,4 +14,4 @@ HTTP endpoint.
 ## Where do failures go?
 
 Alert and incident routing are institution-owned. Workflows needing a manual decision
-should open a case in Hrz7; Hrz5 preserves the resulting evidence.
+should open a case in `human-review-console`; `agent-observability` preserves the resulting evidence.

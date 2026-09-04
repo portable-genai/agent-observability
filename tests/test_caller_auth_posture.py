@@ -19,8 +19,9 @@ this string". So the guard now asks the only thing that knows: the caller-identi
 active binding names, which DECLARES whether it verifies its caller server side against an
 issuer (`ports/identity.py`, bound in `api/security.py`).
 
-Hrz5 has no end user; its callers are services. That is the one word that differs from the same
-guard in `hex-service-template` and Hrz7, where the noun is END USER. The rule is identical.
+agent-observability has no end user; its callers are services. That is the one word that differs
+from the same guard in `hex-service-template` and human-review-console, where the noun is END USER.
+The rule is identical.
 
 Four things are proved here, and the last is what stops the defect returning in a different
 shape:

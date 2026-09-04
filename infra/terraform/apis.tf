@@ -1,4 +1,4 @@
-# apis.tf — Enable the Google Cloud APIs Hrz5 needs. Pinned project, no global defaults.
+# apis.tf — Enable the Google Cloud APIs agent-observability needs. Pinned project, no global defaults.
 
 resource "google_project_service" "required" {
   for_each = toset([

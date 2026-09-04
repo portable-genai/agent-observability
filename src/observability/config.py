@@ -1,4 +1,4 @@
-"""Runtime configuration for Hrz5 Observability, Audit & FinOps.
+"""Runtime configuration for agent-observability.
 
 A single :class:`Settings` object is loaded from ``config/settings.yaml`` with
 ``${ENV:-default}`` interpolation, then handed to every adapter constructor

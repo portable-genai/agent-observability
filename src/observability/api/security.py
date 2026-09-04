@@ -1,7 +1,7 @@
 """Service-to-service (S2S) auth: authenticate the *calling service*, fail-closed.
 
-Hrz5's ``POST /v1/audit`` is the platform WORM ingest: every agent routes its immutable
-audit record here. Before this module nothing authenticated the caller. The shared S2S
+agent-observability's ``POST /v1/audit`` is the platform WORM ingest: every agent routes its
+immutable audit record here. Before this module nothing authenticated the caller. The shared S2S
 contract is:
 
 * Callers present ``Authorization: Bearer <token>``.
@@ -31,15 +31,15 @@ string.
 ``/healthz`` is intentionally unauthenticated (liveness); the loopback exposure guard in
 ``api/app.py`` is what keeps it off the LAN while the posture is unauthenticated.
 
-**Sourced from the shared ``hex-service-kit`` commons.** The verification
-logic lives in the commons rather than as a hand-rolled copy here, and delegates to
-:func:`hex_service_kit.web.make_require_service_caller` with this repo's env-var names and
-profile rule passed as arguments, exactly as Hrz3's gateway does. The copy had drifted into
-a fail-open: it took the local shared-secret branch for every profile that was not ``gcp``,
-so ``onprem`` and any typo'd profile served the ingest to an unauthenticated caller
-whenever the token was unset. The commons opens only on an exact ``local`` match, and checks
-the identity policy before the token under the secure profile. A fix to the S2S rule is now
-a version bump of the package rather than an N-repo edit.
+**Sourced from the shared ``hex-service-kit`` commons.** The verification logic lives in the commons
+rather than as a hand-rolled copy here, and delegates to
+:func:`hex_service_kit.web.make_require_service_caller` with this repo's env-var names and profile
+rule passed as arguments, exactly as agent-registry's gateway does. The copy had drifted into a
+fail-open: it took the local shared-secret branch for every profile that was not ``gcp``, so
+``onprem`` and any typo'd profile served the ingest to an unauthenticated caller whenever the token
+was unset. The commons opens only on an exact ``local`` match, and checks the identity policy before
+the token under the secure profile. A fix to the S2S rule is now a version bump of the package
+rather than an N-repo edit.
 
 Both dependencies here share ``OBSERVABILITY_S2S_TOKEN`` and differ only in which allowlist
 authorizes the caller under the secure profile: the general ingest uses
@@ -72,7 +72,8 @@ _APPROVERS_ENV = "OBSERVABILITY_RELEASE_APPROVERS"
 #: profile -> the ``module:Class`` naming the caller-identity scheme it binds. Kept in its own
 #: exact map rather than in ``settings.adapters``: those are persistence adapters the container
 #: CONSTRUCTS and Protocol-checks, and an authentication choice must never be able to change the
-#: data profile (or be changed by it) as a side effect. This is the same separation Hrz7 keeps
+#: data profile (or be changed by it) as a side effect. This is the same separation
+#: human-review-console keeps
 #: between its runtime bindings and its identity map.
 CALLER_IDENTITY_BINDINGS: dict[str, str] = {
     "gcp": "observability.adapters.gcp.identity:OidcCallerIdentity",

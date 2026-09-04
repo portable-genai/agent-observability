@@ -1,7 +1,7 @@
 """The profile has ONE source of truth, it fails closed on an unset variable, and it is
 validated at import so a typo cannot serve.
 
-Mirrors Hrz7 (`human-review-console/tests/test_profile_single_source.py`), which is
+Mirrors human-review-console (`human-review-console/tests/test_profile_single_source.py`), which is
 the reference shape for this class of fail-open, and extended with the two defects an
 adversarial verifier PROVED by execution against this repo:
 

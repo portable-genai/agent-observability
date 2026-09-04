@@ -1,13 +1,12 @@
-# SPEC: Hrz5 Agent Observability, Audit & FinOps (`agent-observability`)
+# SPEC: `agent-observability` Agent Observability, Audit & FinOps (`agent-observability`)
 
-Catalog system **Hrz5** (group `hrz`). The platform's system of record for what agents did:
+Catalog system `agent-observability` (group `hrz`). The platform's system of record for what agents did:
 OpenTelemetry tracing, token cost / latency FinOps, and compliance-grade immutable
-(Write-Once-Read-Many) prompt/response audit. A mandatory platform dependency of the Rsk1
-Compliance Assistant (`compliance-advisory`). Region pinned to `asia-southeast1`.
+(Write-Once-Read-Many) prompt/response audit. A mandatory platform dependency of the `compliance-advisory` (`compliance-advisory`). Region pinned to `asia-southeast1`.
 
 ## 1. Scope
 
-Hrz5 owns one persistence concern as a port, plus two infra concerns:
+`agent-observability` owns one persistence concern as a port, plus two infra concerns:
 
 * **Audit (rule R2)**: immutable WORM storage of already-redacted audit events. This is the
   HTTP contract (`POST` / `GET /v1/audit`) and the single domain port (`AuditSinkPort`).
@@ -74,9 +73,9 @@ alongside the `[gcp]` extra) imports. The google client is imported lazily insid
 branch only, so the default local path and the offline tests never import a google-cloud
 package.
 
-## 3. Eval gate (Hrz4-style promotion gate)
+## 3. Eval gate (`model-quality-gate`-style promotion gate)
 
-`eval/run_eval.py` is the offline promotion gate. Hrz5's correctness is the integrity of the
+`eval/run_eval.py` is the offline promotion gate. `agent-observability`'s correctness is the integrity of the
 immutable trail, so it drives the local SQLite WORM adapter through a write / read-back
 cycle and scores (all thresholds `1.00`):
 
@@ -91,14 +90,13 @@ It needs no GCP credentials and no Google Cloud SDK; CI runs it on every change.
 
 `observability.models` (pure standard library, no framework imports):
 
-* `AuditEvent`: field-for-field identical to Rsk1's `AuditEvent` so `to_jsonable(event)`
+* `AuditEvent`: field-for-field identical to `compliance-advisory`'s `AuditEvent` so `to_jsonable(event)`
   crosses the wire without translation.
 * `Citation`: regulator-grade provenance (`source_id`, `regulator`, `jurisdiction`,
   `title`, `url`, `version`, `page`, `snippet`, `score`).
 * `Decision`: `allowed` | `blocked` | `escalated`.
 
-`redacted_prompt` / `redacted_response` arrive **already de-identified** by the upstream Hrz1
-guardrail / DLP (rule R1, P-04). Hrz5 never redacts; it serialises, stores immutably, reads
+`redacted_prompt` / `redacted_response` arrive **already de-identified** by the upstream `agent-guardrail-gateway` / DLP (rule R1, P-04). `agent-observability` never redacts; it serialises, stores immutably, reads
 back.
 
 ## 5. CLI
@@ -114,7 +112,7 @@ back.
 `NotImplementedError` from the `onprem` placeholder maps to a clean exit code `2` that
 names the migration target (no traceback).
 
-## 6. HTTP contract (consumed by Rsk1)
+## 6. HTTP contract (consumed by `compliance-advisory`)
 
 | Method | Path | Body / Query | Result |
 |---|---|---|---|
@@ -125,13 +123,13 @@ names the migration target (no traceback).
 
 Both `/v1/audit` routes require service-to-service auth (§6.1); `/healthz` stays open.
 
-`AuditEvent` JSON is exactly Rsk1's `to_jsonable(AuditEvent)` output: `action`, `actor`,
+`AuditEvent` JSON is exactly `compliance-advisory`'s `to_jsonable(AuditEvent)` output: `action`, `actor`,
 `decision`, `redacted_prompt`, `redacted_response`, `citations[]`, `resource`, `trace_id`,
 `timestamp`, `metadata{}`. `decision` ∈ `allowed | blocked | escalated`. Unknown extra
 keys are ignored so the contract tolerates additive changes. OTLP trace ingest is infra
 (the OTel collector), deliberately not in this HTTP contract.
 
-Rsk1's env var to reach this service: `OBSERVABILITY_URL` (default `http://localhost:8085`).
+`compliance-advisory`'s env var to reach this service: `OBSERVABILITY_URL` (default `http://localhost:8085`).
 
 ### 6.1 Service-to-service auth
 

@@ -1,8 +1,8 @@
-"""JSON-safe serialization for Hrz5 domain objects.
+"""JSON-safe serialization for agent-observability domain objects.
 
-``to_jsonable(obj)`` converts dataclasses, enums, datetimes and nested containers into
-plain JSON-serializable Python. Mirrors the Rsk1 ``domain/serialization.py`` rules so the
-read-back JSON (``GET /v1/audit``) is byte-compatible with what Rsk1 originally sent:
+``to_jsonable(obj)`` converts dataclasses, enums, datetimes and nested containers into plain
+JSON-serializable Python. Mirrors the compliance-advisory ``domain/serialization.py`` rules so the
+read-back JSON (``GET /v1/audit``) is byte-compatible with what compliance-advisory originally sent:
 
 * ``enum.Enum``  -> ``.value``
 * ``datetime``   -> ``.isoformat()``

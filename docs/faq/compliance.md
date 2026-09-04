@@ -5,10 +5,10 @@
 No. It supplies technical control evidence. The institution owns legal interpretation,
 operating effectiveness, retention approval and its regulator-specific crosswalk.
 
-## Which evidence belongs in Hrz5?
+## Which evidence belongs in `agent-observability`?
 
-Durable, already-redacted execution and decision records belong here. Hrz4 owns model
-promotion evidence, while Hrz7 owns the human review decision and its segregation-of-duties
+Durable, already-redacted execution and decision records belong here. `model-quality-gate` owns model
+promotion evidence, while `human-review-console` owns the human review decision and its segregation-of-duties
 workflow.
 
 ## Is local SQLite regulator-grade WORM?

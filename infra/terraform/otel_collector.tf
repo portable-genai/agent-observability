@@ -1,6 +1,6 @@
-# otel_collector.tf — The OpenTelemetry Collector for catalog system Hrz5 (us-central1).
+# otel_collector.tf — The OpenTelemetry Collector for catalog system agent-observability (us-central1).
 #
-# Trace ingest is INFRA, not part of the Hrz5 HTTP contract (SPEC §6): agents export OTLP
+# Trace ingest is INFRA, not part of the agent-observability HTTP contract (SPEC §6): agents export OTLP
 # spans here and the collector batches + forwards them to Cloud Trace. Before this file
 # the collector was a checked-in config with no provisioned target and no canonical URL
 # (see catalog/catalog/plans/plan-hrz5-otlp-collector.md). This provisions it as
@@ -11,7 +11,7 @@
 resource "google_service_account" "otel_collector" {
   project      = var.project_id
   account_id   = "otel-collector"
-  display_name = "Hrz5 OpenTelemetry Collector runtime SA"
+  display_name = "agent-observability OpenTelemetry Collector runtime SA"
 }
 
 resource "google_project_iam_member" "otel_trace_agent" {

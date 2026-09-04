@@ -1,7 +1,7 @@
-"""Domain models for Hrz5 Observability, Audit & FinOps.
+"""Domain models for agent-observability.
 
 These dataclasses are the in-process contract the ports speak. Their field names mirror
-the Rsk1 Compliance Assistant domain (``AuditEvent`` / ``Citation`` / ``Decision`` in
+the compliance-advisory domain (``AuditEvent`` / ``Citation`` / ``Decision`` in
 ``compliance_advisory.domain.models``) so the JSON that crosses the wire (see
 :mod:`observability.schemas`) is identical on both ends. Enums serialise to ``.value``.
 
@@ -19,12 +19,12 @@ from datetime import UTC, datetime
 
 
 def utcnow() -> datetime:
-    """Timezone-aware UTC now (matches the Rsk1 domain helper)."""
+    """Timezone-aware UTC now (matches the compliance-advisory domain helper)."""
     return datetime.now(tz=UTC)
 
 
 class Decision(enum.Enum):
-    """Outcome of one assistant interaction (mirrors Rsk1 ``Decision``)."""
+    """Outcome of one assistant interaction (mirrors compliance-advisory ``Decision``)."""
 
     ALLOWED = "allowed"
     BLOCKED = "blocked"
@@ -33,10 +33,12 @@ class Decision(enum.Enum):
 
 @dataclass(frozen=True, slots=True)
 class Citation:
-    """Regulator-grade provenance attached to a generated claim (mirrors Rsk1 ``Citation``).
+    """Regulator-grade provenance attached to a generated claim (mirrors compliance-advisory
+    ``Citation``).
 
-    Hrz5 stores citations verbatim; it does not interpret ``regulator`` / ``jurisdiction``
-    as enums (they cross the wire as plain strings) so it stays decoupled from Rsk1's
+    agent-observability stores citations verbatim; it does not interpret ``regulator`` /
+    ``jurisdiction``
+    as enums (they cross the wire as plain strings) so it stays decoupled from compliance-advisory's
     enum surface and accepts any catalog system's events.
     """
 

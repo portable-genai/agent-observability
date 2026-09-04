@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bounded, executable portability proof for Hrz5.
+"""Bounded, executable portability proof for agent-observability.
 
 This proof runs offline. It checks the complete adapter map, a real SQLite record/reopen
 round trip, open JSON wire-format reload, SDK-free managed construction, fail-closed
@@ -85,7 +85,7 @@ def _event() -> AuditEvent:
 
 
 def main() -> int:
-    print("Hrz5 bounded portability proof")
+    print("agent-observability bounded portability proof")
     base = Settings.load()
     _require(set(base.adapters) == _PORTS, "port set")
     _require(

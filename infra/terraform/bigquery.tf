@@ -10,7 +10,7 @@ resource "google_bigquery_dataset" "finops" {
   # dataset_id matches settings.yaml finops.bigquery_dataset
   dataset_id    = "agent_finops"
   friendly_name = "Agent platform FinOps"
-  description   = "Analytical mirror of Hrz5 audit events: token cost + latency dashboards."
+  description   = "Analytical mirror of agent-observability events: token cost + latency dashboards."
   location      = var.region # us-central1 (P-03 residency)
 
   # Roll off raw analytical rows after ~1 year; the WORM bucket keeps the 7y record.
