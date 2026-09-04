@@ -1,4 +1,4 @@
-# Hrz5 Agent Observability, Audit & FinOps — developer tasks.
+# agent-observability Agent Observability, Audit & FinOps — developer tasks.
 # All default targets run OFFLINE on the SDK-free `local` profile (no Google Cloud SDKs).
 
 PY ?= python3

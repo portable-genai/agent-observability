@@ -1,6 +1,6 @@
-# Adopting Hrz5
+# Adopting `agent-observability`
 
-Hrz5 is a reference audit, observability and FinOps service. An institution can consume
+`agent-observability` is a reference audit, observability and FinOps service. An institution can consume
 it unchanged, fork it, or implement its audit port behind an existing evidence platform.
 Prefer configuration and adapter replacement over changing the event or wire contracts.
 
@@ -8,12 +8,12 @@ Prefer configuration and adapter replacement over changing the event or wire con
 
 | Mode | Use when | Institution-owned changes |
 |---|---|---|
-| Consume Hrz5 | The REST event contract and managed GCP posture fit | S2S identity, project/region inputs, retention approval, alerting and Terraform state |
-| Fork Hrz5 | Naming, release cadence or evidence ownership must be independent | Rename, adapters, deployment, retention policy and regulator crosswalk |
+| Consume `agent-observability` | The REST event contract and managed GCP posture fit | S2S identity, project/region inputs, retention approval, alerting and Terraform state |
+| Fork `agent-observability` | Naming, release cadence or evidence ownership must be independent | Rename, adapters, deployment, retention policy and regulator crosswalk |
 | Implement the port | An existing WORM platform must remain authoritative | New `AuditSinkPort` adapter, exact profile binding and contract/evidence tests |
 
-Hrz1 owns redaction before records arrive. Hrz3 owns workload and entitlement registry,
-Hrz4 owns quality promotion, Hrz7 owns human decisions, and Hrz5 preserves their durable
+`agent-guardrail-gateway` owns redaction before records arrive. `agent-registry` owns workload and entitlement registry,
+`model-quality-gate` owns quality promotion, `human-review-console` owns human decisions, and `agent-observability` preserves their durable
 execution evidence. Do not move those responsibilities into this repository.
 
 ## Stable and institution-owned surfaces

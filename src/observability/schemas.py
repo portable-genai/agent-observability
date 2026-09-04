@@ -1,8 +1,9 @@
 """Pydantic request/response schemas — the wire contract.
 
-Mirrors SPEC §6 for **Hrz5 ``agent-observability``** field-for-field. The
-``AuditEventModel`` body is exactly Rsk1's ``to_jsonable(AuditEvent)`` output, so Rsk1's
-remote audit client serialises and this service deserialises without translation:
+Mirrors SPEC §6 for **agent-observability ``agent-observability``** field-for-field. The
+``AuditEventModel`` body is exactly compliance-advisory's ``to_jsonable(AuditEvent)`` output, so
+compliance-advisory's remote audit client serialises and this service deserialises without
+translation:
 
     POST /v1/audit  {AuditEvent}                       -> 202 Accepted (no body echo needed)
     GET  /v1/audit?actor=&action=&limit=               -> [ {AuditEvent}, ... ] (redacted)
@@ -12,7 +13,7 @@ remote audit client serialises and this service deserialises without translation
     { "action","actor","decision","redacted_prompt","redacted_response",
       "citations":[{...Citation}],"resource","trace_id","timestamp","metadata":{} }
 
-``Citation`` JSON mirrors the Rsk1 ``Citation`` dataclass:
+``Citation`` JSON mirrors the compliance-advisory ``Citation`` dataclass:
     { "source_id","regulator","jurisdiction","title","url","version","page",
       "snippet","score" }
 
@@ -35,7 +36,7 @@ from .models import AuditEvent, Citation, Decision, utcnow
 
 
 class CitationModel(BaseModel):
-    """Provenance attached to a claim — verbatim from Rsk1's ``Citation``."""
+    """Provenance attached to a claim — verbatim from compliance-advisory's ``Citation``."""
 
     model_config = ConfigDict(extra="ignore")
 
@@ -78,7 +79,7 @@ class CitationModel(BaseModel):
 
 
 class AuditEventModel(BaseModel):
-    """The ``AuditEvent`` wire contract (SPEC §6, Hrz5).
+    """The ``AuditEvent`` wire contract (SPEC §6, agent-observability).
 
     ``decision`` is the enum string (``"allowed"`` | ``"blocked"`` | ``"escalated"``).
     ``timestamp`` is ISO 8601; it defaults to *now* if a client omits it. Unknown extra
@@ -106,7 +107,7 @@ class AuditEventModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def upgrade_v1_payload(cls, value: object) -> object:
-        """Accept the old Hrz4 ``summary/detail`` names without losing evidence."""
+        """Accept the old model-quality-gate ``summary/detail`` names without losing evidence."""
         if not isinstance(value, dict):
             return value
         upgraded = dict(value)

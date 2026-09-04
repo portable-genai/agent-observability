@@ -1,8 +1,8 @@
-# Runbook: Hrz5 Agent Observability, Audit & FinOps
+# Runbook: `agent-observability` Agent Observability, Audit & FinOps
 
-Operational notes for deploying and running Hrz5 (`agent-observability`) on GCP in
+Operational notes for deploying and running `agent-observability` on GCP in
 `asia-southeast1`. This is a reference build; adapt it to your own change-management and
-model-risk sign-off before any live use. Hrz5 is a control-plane service: it has no
+model-risk sign-off before any live use. `agent-observability` is a control-plane service: it has no
 end-user UI and no LLM/ADK agent, it serialises and stores already-redacted audit events
 and ingests OpenTelemetry traces.
 
@@ -22,7 +22,7 @@ terraform plan
 terraform apply
 
 # 2. Export the outputs consumers and the runtime need.
-export OBSERVABILITY_URL="$(terraform output -raw service_uri)"   # Rsk1 posts audit here
+export OBSERVABILITY_URL="$(terraform output -raw service_uri)"   # `compliance-advisory` posts audit here
 export OBSERVABILITY_WORM_BUCKET="$(terraform output -raw worm_bucket_id)"
 export OBSERVABILITY_BQ_DATASET="$(terraform output -raw finops_dataset)"
 export OTEL_EXPORTER_OTLP_ENDPOINT="$(terraform output -raw otlp_endpoint)" # agents tag spans here
@@ -66,13 +66,13 @@ Policy (`infra/terraform/org_policy.tf`) refuses an out-of-region create made by
 the app itself re-validates `GCP_REGION` against `OBSERVABILITY_ALLOWED_REGIONS` at load and
 refuses to start otherwise. Set the app's `GCP_REGION` to the same selected value, and add
 the region to `allowed_regions` (Terraform) and `OBSERVABILITY_ALLOWED_REGIONS` (app) when
-you approve a second one. The alert "Hrz5 residency or CMEK posture violation" pages on any
+you approve a second one. The alert "`agent-observability` residency or CMEK posture violation" pages on any
 Org Policy denial, so a bypass attempt is visible rather than silent.
 
 ## 2.1 Promoting the VPC Service Controls perimeter
 
 The perimeter in `infra/terraform/vpc_sc.tf` is inert until you set `access_policy_id`, and
-then applies in **dry run**: every violation is logged and allowed, and the alert "Hrz5
+then applies in **dry run**: every violation is logged and allowed, and the alert "`agent-observability`
 VPC-SC dry-run violations" surfaces it. Work through the violations (add a legitimate caller
 to an access level, fix an illegitimate one) until the alert has been quiet for a full
 business cycle, then set `vpc_sc_enforce = true`. The dry-run spec and the enforced status
@@ -85,10 +85,10 @@ The audit bucket retention is `retention_days` (default `2557`, ~7 years) and th
 reduced and the bucket cannot be deleted for the full window, not even with project-owner
 rights, and `terraform destroy` will not remove it. Confirm `retention_days` before the
 first apply. To trial without locking, set `locked = false` in `logging_worm.tf` (NOT
-compliant for production; it breaks the rule R2 WORM guarantee Rsk1 depends on). A log sink
+compliant for production; it breaks the rule R2 WORM guarantee `compliance-advisory` depends on). A log sink
 routes `agent-observability-audit` plus all Cloud Audit Logs into the locked bucket, and an
 `audit_config` enables `DATA_READ` so every read of the store is itself audited (P-08).
-Only already-redacted prompts/responses are ever written (P-04, R1); Hrz5 never redacts.
+Only already-redacted prompts/responses are ever written (P-04, R1); `agent-observability` never redacts.
 
 ## 4. Service-to-service auth
 
@@ -153,7 +153,7 @@ uvicorn over a real socket from this machine's LAN address, and asserts every ce
 
 ## 5. Tracing and FinOps after deploy
 
-Point agents (Rsk1 included) at the collector with `OTEL_EXPORTER_OTLP_ENDPOINT` (the
+Point agents (`compliance-advisory` included) at the collector with `OTEL_EXPORTER_OTLP_ENDPOINT` (the
 `otlp_endpoint` output); the same `trace_id` they tag is stored on the `AuditEvent`, so an
 auditor can pivot from an audit record to its full reasoning trace. Token cost and latency
 ride in `AuditEvent.metadata` (`tokens_in` / `tokens_out` / `latency_ms`); a log sink

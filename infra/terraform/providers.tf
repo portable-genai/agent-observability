@@ -1,4 +1,4 @@
-# providers.tf — Provider pinning for the Hrz5 observability deploy.
+# providers.tf — Provider pinning for the agent-observability deploy.
 #
 # General Principle map:
 #   P-03 (data residency): every provider call is pinned to var.region.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the Hrz5 rename in an isolated copy and run a fresh locked full gate."""
+"""Apply the agent-observability rename in an isolated copy and run a fresh locked full gate."""
 
 from __future__ import annotations
 

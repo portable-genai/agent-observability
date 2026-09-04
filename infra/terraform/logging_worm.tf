@@ -1,6 +1,6 @@
-# logging_worm.tf — Hrz5 WORM audit trail: locked Cloud Logging bucket + sink + audit config.
+# logging_worm.tf — agent-observability trail: locked Cloud Logging bucket + sink + audit config.
 #
-# This is the compliance heart of Hrz5 (catalog system Hrz5; rule R2). Rsk1 (and any other
+# This is the compliance heart of agent-observability (catalog system agent-observability; rule R2). compliance-advisory (and any other
 # catalog system) routes immutable audit records here via POST /v1/audit; the
 # CloudLoggingAuditAdapter writes already-redacted AuditEvents to the log below, and this
 # sink routes them into a LOCKED log bucket — Write-Once-Read-Many.
@@ -20,7 +20,7 @@
 # # You CANNOT undo it, not even with project-owner rights, and `terraform    # #
 # # destroy` will NOT remove it. Confirm retention_days before the first      # #
 # # apply. To trial without locking, set worm_locked = false (NOT compliant   # #
-# # for production: it breaks the rule R2 WORM guarantee Rsk1 depends on).    # #
+# # for production: it breaks the rule R2 WORM guarantee compliance-advisory depends on).    # #
 # ############################################################################ #
 #
 # This was the literal `locked = true`, and the banner above used to tell the operator to
@@ -41,7 +41,7 @@ resource "google_logging_project_bucket_config" "worm_audit" {
   location = var.region # us-central1 (P-03)
   # bucket_id matches settings.yaml logging.bucket_id
   bucket_id   = "agent-observability-worm"
-  description = "WORM audit bucket for catalog system Hrz5 (locked, ~7y retention, rule R2)."
+  description = "WORM audit bucket for catalog system agent-observability (locked, ~7y retention, rule R2)."
   # retention_days defaults to 2557 (~7 years) — see var.retention_days.
   retention_days = var.retention_days
 
@@ -62,7 +62,7 @@ resource "google_logging_project_bucket_config" "worm_audit" {
   ]
 }
 
-# The structured log Hrz5's CloudLoggingAuditAdapter writes to (settings.logging.log_name).
+# The structured log agent-observability's CloudLoggingAuditAdapter writes to (settings.logging.log_name).
 locals {
   audit_log_name = "agent-observability-audit"
 }

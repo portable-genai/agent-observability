@@ -1,4 +1,4 @@
-# Hrz5 Agent Observability, Audit & FinOps — container image.
+# agent-observability Agent Observability, Audit & FinOps — container image.
 # Multi-stage: build a wheel, then install it (with the [gcp] extra) into a slim runtime.
 
 # ---- builder ---------------------------------------------------------------- #

@@ -1,9 +1,9 @@
-"""Hrz5 Agent Observability, Audit & FinOps (``agent-observability``).
+"""agent-observability Agent Observability, Audit & FinOps (``agent-observability``).
 
-Catalog system **Hrz5** (group ``hrz``). A mandatory platform dependency of the Rsk1
-Compliance Assistant (``compliance-advisory``): Rsk1 routes every immutable audit
-record through this service's ``POST /v1/audit`` endpoint instead of writing Cloud
-Logging directly. Hrz5 provides three concerns:
+Catalog system agent-observability (group ``hrz``). A mandatory platform dependency of the
+compliance-advisory (``compliance-advisory``): compliance-advisory routes every immutable audit
+record through this service's ``POST /v1/audit`` endpoint instead of writing Cloud Logging directly.
+agent-observability provides three concerns:
 
 * **Tracing** — OpenTelemetry / Cloud Trace ingest (infra: an OTel collector, *not*
   part of this HTTP contract; see ``infra/otel/``).
@@ -12,8 +12,8 @@ Logging directly. Hrz5 provides three concerns:
 * **FinOps** — token cost / latency dashboards, sourced from a BigQuery export of the
   audit + trace streams (see ``infra/terraform`` and the FinOps note in the README).
 
-The HTTP surface mirrors SPEC §6 (Hrz5) field-for-field so Rsk1's remote audit client
-deserialises without translation.
+The HTTP surface mirrors SPEC §6 (agent-observability) field-for-field so compliance-advisory's
+remote audit client deserialises without translation.
 """
 
 from __future__ import annotations

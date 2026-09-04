@@ -1,4 +1,4 @@
-# Contributing to Hrz5 Observability, Audit & FinOps
+# Contributing to `agent-observability`
 
 Thanks for your interest. This is an engineering-portfolio reference repo; the bar is that
 every change keeps the offline gate green and respects the hexagonal boundaries.
@@ -26,7 +26,7 @@ python eval/run_eval.py         # audit-integrity eval gate (exit 0)
 
 All five must pass. The eval gate scores deterministic trail-integrity invariants
 (`write_read_parity` / `citation_provenance` / `redaction_preserved` /
-`newest_first_order`); Hrz5 is platform eval-infrastructure, so there is no Hrz4
+`newest_first_order`); `agent-observability` is platform eval-infrastructure, so there is no `model-quality-gate`
 promotion split, by design.
 
 ## Architecture rules (hexagon)

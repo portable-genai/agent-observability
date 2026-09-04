@@ -1,10 +1,10 @@
 """Prove every eval metric can go RED: a degraded audit round trip must score below threshold.
 
-Hrz5 has no model to promote, so its metrics are audit-integrity invariants rather than judge
-scores. That changes nothing about falsification: all four sit at a 1.00 threshold, and a
-metric pinned at 1.00 that has never been observed failing is indistinguishable from no check
-at all. Each scorer is imported from ``eval/run_eval.py`` and fed the same round trip twice,
-once as the store returned it and once carrying exactly the defect the metric exists to catch.
+agent-observability has no model to promote, so its metrics are audit-integrity invariants rather
+than judge scores. That changes nothing about falsification: all four sit at a 1.00 threshold, and a
+metric pinned at 1.00 that has never been observed failing is indistinguishable from no check at
+all. Each scorer is imported from ``eval/run_eval.py`` and fed the same round trip twice, once as
+the store returned it and once carrying exactly the defect the metric exists to catch.
 """
 
 from __future__ import annotations

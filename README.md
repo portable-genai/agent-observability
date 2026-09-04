@@ -1,12 +1,12 @@
-# Hrz5: Agent Observability, Audit & FinOps (`agent-observability`)
+# `agent-observability`: Agent Observability, Audit & FinOps (`agent-observability`)
 
 **Industries:** All GenAI (cross-industry)
 
-> Catalog system **Hrz5** (group `hrz`). OpenTelemetry tracing + token cost/latency FinOps
+> Catalog system `agent-observability` (group `hrz`). OpenTelemetry tracing + token cost/latency FinOps
 > + **compliance-grade immutable (WORM) prompt/response audit**. A mandatory platform
-> dependency of the **Rsk1 Compliance Assistant** (`compliance-advisory`).
+> dependency of the **`compliance-advisory`** (`compliance-advisory`).
 
-Hrz5 is the platform's *system of record* for what agents did. It provides three concerns:
+`agent-observability` is the platform's *system of record* for what agents did. It provides three concerns:
 
 | Concern | What it does | Where it lives |
 |---|---|---|
@@ -19,7 +19,7 @@ against an approved residency allowlist.
 
 ## Documentation
 
-- [Adopting or forking Hrz5](docs/ADOPTING.md)
+- [Adopting or forking `agent-observability`](docs/ADOPTING.md)
 - [Role-specific FAQs](docs/faq/README.md)
 - [Presenter and unattended demo](DEMO.md)
 - [Operations runbook](docs/runbook.md)
@@ -29,31 +29,31 @@ against an approved residency allowlist.
 
 ---
 
-## How Rsk1 depends on Hrz5
+## How `compliance-advisory` depends on `agent-observability`
 
-Rsk1 emits an immutable audit record at the end of every interaction (its standard answer
+`compliance-advisory` emits an immutable audit record at the end of every interaction (its standard answer
 pipeline ends with `audit.record(redacted)`, SPEC §5). In the full platform deployment
-Rsk1 does **not** write Cloud Logging directly; it routes the record through **Hrz5**:
+`compliance-advisory` does **not** write Cloud Logging directly; it routes the record through `agent-observability`:
 
 ```mermaid
 flowchart LR
-  Rsk1["Rsk1 (compliance-advisory)"] --> adapter["RemoteAuditAdapter.record(AuditEvent)"]
-  adapter -->|"POST {OBSERVABILITY_URL}/v1/audit<br/>default http://localhost:8085"| Hrz5["Hrz5 service"]
-  Hrz5 -->|"202 Accepted"| worm["locked Cloud Logging WORM bucket"]
+  `compliance-advisory`["`compliance-advisory` (compliance-advisory)"] --> adapter["RemoteAuditAdapter.record(AuditEvent)"]
+  adapter -->|"POST {OBSERVABILITY_URL}/v1/audit<br/>default http://localhost:8085"| `agent-observability`["`agent-observability` service"]
+  `agent-observability` -->|"202 Accepted"| worm["locked Cloud Logging WORM bucket"]
 ```
 
-The body Rsk1 sends is `to_jsonable(AuditEvent)`; Hrz5's `AuditEventModel` accepts it
-field-for-field (SPEC §6, Hrz5 contract). Because Hrz5 owns the *locked* bucket, Rsk1 cannot
+The body `compliance-advisory` sends is `to_jsonable(AuditEvent)`; `agent-observability`'s `AuditEventModel` accepts it
+field-for-field (SPEC §6, `agent-observability` contract). Because `agent-observability` owns the *locked* bucket, `compliance-advisory` cannot
 tamper with or delete its own audit trail, exactly the separation a regulator expects.
 
 * **Rule R1** (redaction at the boundary): prompts/responses arrive **already redacted**
-  by Hrz1 `agent-guardrail-gateway`. Hrz5 never redacts; it serialises and stores.
-* **Rule R2** (immutable audit): Hrz5 is the WORM store. Retention is `2557d` (~7 years),
+  by `agent-guardrail-gateway`. `agent-observability` never redacts; it serialises and stores.
+* **Rule R2** (immutable audit): `agent-observability` is the WORM store. Retention is `2557d` (~7 years),
   `locked = true`.
 
 ---
 
-## HTTP API (SPEC §6, Hrz5)
+## HTTP API (SPEC §6, `agent-observability`)
 
 Release approval is a separate maker-checker surface:
 `POST /v1/release-approvals` is restricted to a dedicated reviewer service-account
@@ -137,7 +137,7 @@ flowchart LR
   post["POST /v1/audit"] --> app
   get["GET /v1/audit"] --> app
   cli["agent-observability CLI"] --> container
-  subgraph Hrz5["Hrz5 service"]
+  subgraph `agent-observability`["`agent-observability` service"]
     app["FastAPI app"] --> container["Container"] --> port["AuditSinkPort"]
   end
   port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: locked Cloud Logging bucket (WORM, ~7y), lazy google-cloud-logging import"]
@@ -210,7 +210,7 @@ make check          # complete offline gate
 
 `agent-observability read` prints the immutable audit records with regulator-grade
 provenance (`[source_id, REGULATOR vX p.N] url`). Under `onprem` the same command exits
-`2` with the migration message (the placeholder never fabricates a record). Point Rsk1 at
+`2` with the migration message (the placeholder never fabricates a record). Point `compliance-advisory` at
 the service with `export OBSERVABILITY_URL=http://localhost:8085`.
 
 ---
@@ -244,11 +244,11 @@ To run against real GCP: `pip install -e '.[gcp]'` then `export OBSERVABILITY_PR
 
 ## OpenTelemetry tracing
 
-Hrz5 ingests agent spans via an **OpenTelemetry collector**, not via this HTTP API. A
+`agent-observability` ingests agent spans via an **OpenTelemetry collector**, not via this HTTP API. A
 ready-to-run collector config is in [`infra/otel/otel-collector-config.yaml`](infra/otel/otel-collector-config.yaml):
 it receives OTLP (gRPC `:4317` / HTTP `:4318`), removes GenAI prompt, response, tool,
 event and log-body content, batches, and exports to **Google Cloud Trace** in the selected
-region. Agents (Rsk1 included) set
+region. Agents (`compliance-advisory` included) set
 `OTEL_EXPORTER_OTLP_ENDPOINT` to the collector and tag spans with `trace_id`; that same
 `trace_id` is stored on the `AuditEvent`, so an auditor can pivot from an audit record to
 its full reasoning trace.
@@ -301,7 +301,7 @@ Multiply token sums by the model's per-token price to get cost per actor / use c
   `locked = true`. **⚠ Locking is irreversible** (see the banner in `logging_worm.tf`).
 * **Log sink**: routes `agent-observability-audit` into the locked bucket.
 * **BigQuery dataset**: `agent_finops` + a sink mirroring the audit log for FinOps.
-* **Cloud Run**: the Hrz5 service, ingress-internal, `gcp` profile.
+* **Cloud Run**: the `agent-observability` service, ingress-internal, `gcp` profile.
 * **`audit_config`**: `DATA_READ` (plus `DATA_WRITE` / `ADMIN_READ`) so every *read* of
   the audit store is itself audited.
 * **Org Policy**: `gcp.resourceLocations` pinned to `var.allowed_regions` and
@@ -325,7 +325,7 @@ terraform init && terraform plan
 
 | Item | Where |
 |---|---|
-| **R1** redaction at the boundary | enforced upstream (Hrz1); Hrz5 never sees raw PII |
+| **R1** redaction at the boundary | enforced upstream (`agent-guardrail-gateway`); `agent-observability` never sees raw PII |
 | **R2** immutable WORM audit | locked Cloud Logging bucket, `retention_days=2557`, `locked=true`; hash-chained, trigger-enforced, externally anchored offline stand-in (`agent-observability audit verify`) |
 | **P-04** no raw PII in logs | only `redacted_*` fields stored |
 | **P-08** immutable audit + read auditing | locked bucket + `DATA_READ` audit config |
@@ -337,7 +337,7 @@ terraform init && terraform plan
 
 ## Cost and latency
 
-Size this system's cost and latency with the shared interactive calculator: [**live**](https://portable-genai.github.io/cost-latency-calculator/calc/calculator.html?system=Hrz5) or the [in-repo page](cost-latency-calculator.html). The engine and the pricing book are maintained once in [cost-latency-calculator](https://github.com/portable-genai/cost-latency-calculator).
+Size this system's cost and latency with the shared interactive calculator: [**live**](https://portable-genai.github.io/cost-latency-calculator/calc/calculator.html?system=agent-observability) or the [in-repo page](cost-latency-calculator.html). The engine and the pricing book are maintained once in [cost-latency-calculator](https://github.com/portable-genai/cost-latency-calculator).
 
 ## License
 

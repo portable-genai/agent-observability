@@ -1,4 +1,4 @@
-"""Dependency container for Hrz5.
+"""Dependency container for agent-observability.
 
 Resolves the active ``profile`` to a concrete adapter instance by importing the dotted
 path declared in ``config/settings.yaml`` under ``adapters:`` and constructing it with

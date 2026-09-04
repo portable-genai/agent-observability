@@ -1,6 +1,6 @@
-# OpenTelemetry Collector config for catalog system Hrz5 (Agent Observability).
+# OpenTelemetry Collector config for catalog system agent-observability (Agent Observability).
 #
-# Telemetry ingest is INFRA, not part of the Hrz5 HTTP contract (SPEC §6). Agents export
+# Telemetry ingest is INFRA, not part of the agent-observability HTTP contract (SPEC §6). Agents export
 # OTLP traces, metrics, and logs to this collector. The portable OpenTelemetry contract
 # is deliberately vendor neutral; only the exporter below is GCP-specific.
 #
@@ -102,7 +102,7 @@ processors:
         value: ${env:GCP_REGION}
         action: upsert
       - key: catalog.system
-        value: Hrz5
+        value: agent-observability
         action: upsert
 
 exporters:

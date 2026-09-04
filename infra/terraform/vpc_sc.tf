@@ -21,7 +21,7 @@ resource "google_access_context_manager_service_perimeter" "audit" {
 
   parent = "accessPolicies/${var.access_policy_id}"
   name   = "accessPolicies/${var.access_policy_id}/servicePerimeters/${local.vpc_sc_perimeter_key}"
-  title  = "Hrz5 agent observability audit perimeter"
+  title  = "agent-observability agent observability audit perimeter"
 
   # Dry run unless the adopter has promoted it deliberately.
   use_explicit_dry_run_spec = !var.vpc_sc_enforce

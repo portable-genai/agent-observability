@@ -13,5 +13,5 @@ managed-bucket migration, identity portability or portable trace/FinOps infrastr
 
 ## Who owns adjacent portability concerns?
 
-Hrz3 owns identity/entitlement portability, Hrz4 owns quality evidence, Hrz7 owns portable
+`agent-registry` owns identity/entitlement portability, `model-quality-gate` owns quality evidence, `human-review-console` owns portable
 human-review state, and each producer owns its own business data migration.

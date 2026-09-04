@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Offline evaluation gate for Hrz5 Observability, Audit & FinOps — rule R2 / P-08.
+"""Offline evaluation gate for agent-observability — rule R2 / P-08.
 
 This is the **promotion gate**: CI runs it on every change and the build fails if the
-audit store stops satisfying its compliance invariants. Unlike a QA assistant, Hrz5's
+audit store stops satisfying its compliance invariants. Unlike a QA assistant, agent-observability's
 correctness is about the *integrity of the immutable trail*, so the metrics check the
 WORM round-trip rather than answer quality::
 
@@ -221,7 +221,7 @@ def print_report(scores: dict[str, float], passed: bool, dataset: Path, n: int) 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Offline audit-integrity eval gate for Hrz5 (rule R2 / P-08).",
+        description="Offline audit-integrity eval gate for agent-observability (rule R2 / P-08).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

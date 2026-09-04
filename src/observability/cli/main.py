@@ -1,4 +1,4 @@
-"""``agent-observability`` — the Typer CLI for Hrz5 Observability, Audit & FinOps.
+"""``agent-observability`` — the Typer CLI for agent-observability.
 
 A thin presentation layer over the single audit concern. Every command builds the wiring
 from :class:`~observability.container.Container` for the active ``OBSERVABILITY_PROFILE``,
@@ -34,7 +34,8 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help=(
-        "Hrz5 Agent Observability, Audit & FinOps — write and read back compliance-grade "
+        "agent-observability Agent Observability, Audit & FinOps — write and read back "
+        "compliance-grade "
         "immutable (WORM) audit records on the Horizon agent platform "
         "(GCP region configurable; default asia-southeast1)."
     ),

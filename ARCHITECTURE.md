@@ -1,4 +1,4 @@
-# Architecture: Hrz5 Agent Observability, Audit & FinOps
+# Architecture: `agent-observability` Agent Observability, Audit & FinOps
 
 Hexagonal ports-and-adapters. The domain core is pure standard library; the one
 persistence concern is a port (`AuditSinkPort`); three adapter families implement it and
@@ -44,7 +44,7 @@ profile change, which is the no-lock-in promise (P-02).
 
 ```mermaid
 flowchart LR
-  client["Rsk1 remote audit client / CLI / API"] --> app["FastAPI app + Container"]
+  client["`compliance-advisory` remote audit client / CLI / API"] --> app["FastAPI app + Container"]
   app --> port["AuditSinkPort (record, read_recent)"]
   port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: locked Cloud Logging WORM bucket, BigQuery FinOps export"]
   port -->|"profile=local"| local["LocalAppendOnlyAuditAdapter: append-only SQLite WORM stand-in, seedable, SDK-free"]
@@ -68,26 +68,26 @@ store with page-level citation provenance.
 
 ```mermaid
 sequenceDiagram
-  participant Rsk1 as Rsk1 (already-redacted)
-  participant API as Hrz5 FastAPI
+  participant `compliance-advisory` as `compliance-advisory` (already-redacted)
+  participant API as `agent-observability` FastAPI
   participant Port as AuditSinkPort
   participant Store as profile-bound store
-  Rsk1->>API: POST /v1/audit AuditEvent
+  `compliance-advisory`->>API: POST /v1/audit AuditEvent
   API->>Port: record(event)
   Port->>Store: append immutable record
   Store-->>API: 202 Accepted
   Note over API,Store: local appends to SQLite WORM, gcp writes the locked bucket, onprem raises
-  Rsk1->>API: GET /v1/audit actor and action and limit
+  `compliance-advisory`->>API: GET /v1/audit actor and action and limit
   API->>Port: read_recent(...)
   Port->>Store: query newest first
-  Store-->>Rsk1: list of AuditEvent, redacted
+  Store-->>`compliance-advisory`: list of AuditEvent, redacted
 ```
 
 ## Data residency and immutability
 
 Every managed resource is pinned to the selected region (default `asia-southeast1`). The `gcp` audit store
 is a *locked* Cloud Logging bucket (retention 2557 days, ~7 years): writes are
-Write-Once-Read-Many and the bucket cannot be unlocked, so Rsk1 cannot tamper with or delete
+Write-Once-Read-Many and the bucket cannot be unlocked, so `compliance-advisory` cannot tamper with or delete
 its own audit trail. The `local` SQLite stand-in mirrors that guarantee off cloud: SQLite triggers refuse UPDATE
 and refuse DELETE outside a recorded retention prune, every record is hash-chained to its
 predecessor, and both the chain head and the retention-prune watermark are anchored in an

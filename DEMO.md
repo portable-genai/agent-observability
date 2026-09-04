@@ -1,6 +1,6 @@
-# Demo guide: Hrz5 Agent Observability, Audit & FinOps
+# Demo guide: `agent-observability` Agent Observability, Audit & FinOps
 
-Step-by-step scripts for demoing Hrz5 two ways. Hrz5 is a **platform service** (REST API +
+Step-by-step scripts for demoing `agent-observability` two ways. `agent-observability` is a **platform service** (REST API +
 CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwright).
 
 - **Demo A (LOCAL, offline)** the headline flow: a bounded, append-only-by-API audit
@@ -14,7 +14,7 @@ CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwr
 > The synthetic audit corpus is **fictional** (invented prompts/responses, plausible but
 > fictional source ids). Do not run against live customer data without your own legal,
 > security and model-risk sign-off. Prompts/responses arrive **already redacted** upstream
-> by Hrz1 (rule R1); Hrz5 never sees raw PII.
+> by `agent-guardrail-gateway` (rule R1); `agent-observability` never sees raw PII.
 
 ---
 
@@ -207,13 +207,13 @@ price = cost per actor / use case; p95 latency via `APPROX_QUANTILES`).
 
 ## 4. Talking points
 
-- **It is the system of record for what agents did.** Rsk1 routes every interaction's audit
-  record here via `POST /v1/audit`; Hrz5 owns the *locked* bucket, so Rsk1 cannot tamper with
+- **It is the system of record for what agents did.** `compliance-advisory` routes every interaction's audit
+  record here via `POST /v1/audit`; `agent-observability` owns the *locked* bucket, so `compliance-advisory` cannot tamper with
   or delete its own trail (the separation a regulator expects).
 - **WORM, not just "logs".** Append-only, no update/delete path; the retained count is
   monotonic. Retention is ~7 years (`2557d`, `locked = true`).
 - **Redact-before-store.** Only `redacted_*` fields are persisted (rule R1 upstream, P-04
-  here); Hrz5 never sees raw PII.
+  here); `agent-observability` never sees raw PII.
 - **Provenance is the point.** Every claim carries `[source_id, REGULATOR vX p.N] url`, so
   an auditor can pivot from an answer to its source page, and via `trace_id` to the full
   OpenTelemetry reasoning trace.

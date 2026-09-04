@@ -1,8 +1,8 @@
-"""Presenter-controlled, assertion-backed walkthrough of Hrz5 Observability.
+"""Presenter-controlled, assertion-backed walkthrough of agent-observability.
 
-Hrz5 is a platform service with a REST API and CLI, not a browser UI. This demo drives
-the real SDK-free ``local`` adapter against an ephemeral file-backed SQLite store. It
-uses only clearly fictional records and needs no cloud credentials, API key or emulator.
+agent-observability is a platform service with a REST API and CLI, not a browser UI. This demo
+drives the real SDK-free ``local`` adapter against an ephemeral file-backed SQLite store. It uses
+only clearly fictional records and needs no cloud credentials, API key or emulator.
 
 The presenter controls the pace. ``DEMO_AUTO=1`` disables prompts and turns the same
 walkthrough into a CI self-test. ``DEMO_OUT`` selects the JSON evidence artifact path.
@@ -111,7 +111,7 @@ def _fresh_event() -> AuditEvent:
 def main() -> int:
     settings = Settings.load()
     print(RULE)
-    print("Hrz5 Agent Observability, Audit & FinOps - guided local walkthrough")
+    print("agent-observability Agent Observability, Audit & FinOps - guided local walkthrough")
     print(RULE)
     print(
         "Profile : local (SDK-free bounded SQLite audit buffer)\n"

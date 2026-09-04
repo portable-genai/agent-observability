@@ -1,4 +1,4 @@
-"""HTTP contract tests against SPEC §6 (Hrz5). Run offline on the local profile."""
+"""HTTP contract tests against SPEC §6 (agent-observability). Run offline on the local profile."""
 
 from __future__ import annotations
 
@@ -96,7 +96,7 @@ def test_post_then_read_back_round_trips_all_fields(client: TestClient) -> None:
     assert got["schema_version"] == "audit-event/v2"
     assert got["metadata"] == body["metadata"]
 
-    # Citation fields mirror the Rsk1 Citation dataclass.
+    # Citation fields mirror the compliance-advisory Citation dataclass.
     cit = got["citations"][0]
     src = body["citations"][0]
     for key in (

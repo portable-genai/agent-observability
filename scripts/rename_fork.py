@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview or apply a conservative mechanical rename of an Hrz5 fork."""
+"""Preview or apply a conservative mechanical rename of an agent-observability fork."""
 
 from __future__ import annotations
 
@@ -136,7 +136,9 @@ def _format_applied_fork() -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Rename an Hrz5 institutional fork.")
+    parser = argparse.ArgumentParser(
+        description="Rename an agent-observability institutional fork."
+    )
     parser.add_argument("--package", required=True, help="new snake_case Python package")
     parser.add_argument(
         "--service",

@@ -3,7 +3,7 @@
 
 variable "project_id" {
   type        = string
-  description = "Target GCP project id for the Hrz5 observability deploy (per-tenant)."
+  description = "Target GCP project id for the agent-observability deploy (per-tenant)."
 }
 
 variable "region" {
@@ -97,7 +97,7 @@ variable "worm_locked" {
     true (the default) is REQUIRED for a compliant production deploy: the audit trail is
     Write-Once-Read-Many only when locked. Set false ONLY for evaluation/demo stacks that
     must remain deletable (terraform destroy works); that posture is NOT compliant, and
-    Rsk1 depends on the guarantee it gives up.
+    compliance-advisory depends on the guarantee it gives up.
 
     Setting this false against an ALREADY-locked bucket does not unlock it. The API refuses,
     as it should. This governs the first apply.
@@ -108,7 +108,7 @@ variable "worm_locked" {
 
 variable "container_image" {
   type        = string
-  description = "Cloud Run container image for the Hrz5 service."
+  description = "Cloud Run container image for the agent-observability service."
   default     = "asia-southeast1-docker.pkg.dev/REPLACE_ME/hrz/agent-observability:latest"
 }
 

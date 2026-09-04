@@ -1,12 +1,11 @@
 """The shipped tree names this system by its CURRENT catalog id, everywhere (practice G1).
 
-Hrz5 was once catalogued as a legacy short id, and the systems it talks to were too. A
-rename that stops at ``src/`` is not a rename: the distribution metadata in
-``pyproject.toml`` is what pip shows, ``config/settings.yaml`` is COPYed into the runtime
-image, and the collector config stamps a ``catalog.system`` resource attribute onto every
-exported span. A doc claiming "renamed throughout" is only true if something mechanical
-keeps it true, so this scans the whole working tree rather than asserting substrings in
-three prose files.
+agent-observability was once catalogued as a legacy short id, and the systems it talks to were too.
+A rename that stops at ``src/`` is not a rename: the distribution metadata in ``pyproject.toml`` is
+what pip shows, ``config/settings.yaml`` is COPYed into the runtime image, and the collector config
+stamps a ``catalog.system`` resource attribute onto every exported span. A doc claiming "renamed
+throughout" is only true if something mechanical keeps it true, so this scans the whole working tree
+rather than asserting substrings in three prose files.
 
 Exactly one file is exempt: ``docs/practices-audit.md`` is the projection of the catalog's
 common base practices, whose CHECK ids (A1..G7) share spelling with the legacy system ids.
@@ -22,8 +21,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Built from parts so this file does not itself trip the scan it defines.
 LEGACY_IDS = {
-    "A" + "5": "Hrz5",  # this system
-    "C" + "1": "Rsk1",  # the compliance assistant that writes to this system
+    "A" + "5": "agent-observability",  # this system
+    "C" + "1": "compliance-advisory",  # the compliance assistant that writes to this system
 }
 _LEGACY_RE = re.compile(r"(?<![\w-])(" + "|".join(LEGACY_IDS) + r")(?![\w-])")
 
@@ -87,19 +86,21 @@ def test_the_scan_would_actually_fail_on_a_legacy_id(tmp_path: Path) -> None:
     """A guard that cannot fail guards nothing."""
     assert _LEGACY_RE.search("catalog system " + "A" + "5" + " observability")
     assert _LEGACY_RE.search("services (" + "C" + "1" + ") set as OBSERVABILITY_URL")
-    assert not _LEGACY_RE.search("Hrz5 Rsk1 A55 XA5 A5x A-5")
+    assert not _LEGACY_RE.search("agent-observability compliance-advisory A55 XA5 A5x A-5")
 
 
 def test_shipped_metadata_names_the_current_catalog_id() -> None:
     """The claim is positive, not just the absence of the old id."""
     metadata = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert metadata["project"]["description"].startswith("Hrz5 ")
+    # No repository name is a prefix of another (naming rule 8), so the name alone is
+    # unambiguous; the retired id needed a trailing space to keep a two-digit id out.
+    assert metadata["project"]["description"].startswith("agent-observability")
     assert metadata["project"]["name"] == "agent-observability"
 
     settings = (REPO_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8")
-    assert settings.splitlines()[0].startswith("# Hrz5 ")
+    assert settings.splitlines()[0].startswith("# agent-observability ")
 
     collector = (REPO_ROOT / "infra" / "otel" / "otel-collector-config.yaml").read_text(
         encoding="utf-8"
     )
-    assert "value: Hrz5" in collector
+    assert "value: agent-observability" in collector

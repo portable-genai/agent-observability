@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "agent-observability"
 version = "0.0.1"
-description = "Hrz5 Agent Observability, Audit & FinOps — OpenTelemetry tracing + token cost/latency dashboards + compliance-grade immutable (WORM) prompt/response audit for the Horizon agent platform, backed by a locked Cloud Logging bucket + BigQuery FinOps export."
+description = "agent-observability: Agent Observability, Audit & FinOps — OpenTelemetry tracing + token cost/latency dashboards + compliance-grade immutable (WORM) prompt/response audit for the Horizon agent platform, backed by a locked Cloud Logging bucket + BigQuery FinOps export."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
@@ -27,7 +27,7 @@ keywords = [
 # without any Google Cloud SDK. Managed-service adapters live in the [gcp] extra.
 dependencies = [
   # Shared commons, pinned by tag; no build-time coupling. Public repo, so CI
-  # installs it with zero credentials. hex-service-kit: inbound S2S verification (web); Hrz5 is
+  # installs it with zero credentials. hex-service-kit: inbound S2S verification (web); agent-observability is
   # the reference implementation the kit's verifier was extracted from.
   "hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@v0.0.6",
   "fastapi>=0.111",
@@ -59,7 +59,7 @@ dev = [
   "ruff==0.16.5",
   "mypy>=2.3.1",
   "types-PyYAML",
-  # agent-eval-kit: TEST-ONLY here, for assert_can_go_red. Hrz5 is a control-plane service
+  # agent-eval-kit: TEST-ONLY here, for assert_can_go_red. agent-observability is a control-plane service
   # with no model to promote, so it does not adopt the smoke/gate scaffold; the falsification
   # harness applies all the same, because an audit-integrity metric goes falsely green as
   # easily as a judge score. Importing the package does not import the gate client.

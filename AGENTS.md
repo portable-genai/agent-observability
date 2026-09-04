@@ -33,7 +33,7 @@ tests and configuration in the tree actually prove.
 
 ## What this is
 
-Catalog system **Hrz5**: the platform's observability, WORM audit and FinOps system of
+Catalog system `agent-observability`: the platform's observability, WORM audit and FinOps system of
 record. Package `observability`, env prefix `OBSERVABILITY`, CLI `agent-observability`.
 
 ## What each document owns
@@ -65,7 +65,7 @@ ruff check . && ruff format --check . && mypy src && pytest -m 'not integration'
 
 ## House rules specific to this repo
 
-* Events arrive **already redacted**. Hrz5 never redacts (that is Hrz1) and must never gain
+* Events arrive **already redacted**. `agent-observability` never redacts (that is `agent-guardrail-gateway`) and must never gain
   a raw-PII column.
 * **The loopback exposure guard is derived from the CALLER-IDENTITY BINDING, and from nothing
   else.** A caller is authenticated when the scheme the active binding names resolves it from

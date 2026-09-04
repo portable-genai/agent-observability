@@ -1,13 +1,13 @@
-# cloud_run.tf — The Hrz5 observability service on Cloud Run (us-central1).
+# cloud_run.tf — The agent-observability service on Cloud Run (us-central1).
 #
 # Runs the 'gcp' profile so audit writes hit the locked Cloud Logging bucket. Ingress is
-# internal: only other platform services (e.g. Rsk1) inside the VPC / project call it.
+# internal: only other platform services (e.g. compliance-advisory) inside the VPC / project call it.
 
 # Dedicated runtime service account, least privilege.
 resource "google_service_account" "run" {
   project      = var.project_id
   account_id   = "agent-observability"
-  display_name = "Hrz5 Agent Observability runtime SA"
+  display_name = "agent-observability Agent Observability runtime SA"
 }
 
 # Write audit events to Cloud Logging (routed to the locked WORM bucket by the sink).
@@ -138,7 +138,7 @@ resource "google_cloud_run_v2_service_iam_member" "release_approvers" {
 }
 
 output "service_uri" {
-  description = "Internal URL other platform services (Rsk1) set as OBSERVABILITY_URL."
+  description = "Internal URL other platform services (compliance-advisory) set as OBSERVABILITY_URL."
   value       = google_cloud_run_v2_service.observability.uri
 }
 

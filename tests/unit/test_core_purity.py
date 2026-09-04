@@ -5,15 +5,14 @@ serialization of them and the port contracts. A cloud or model SDK import there 
 wearing a green gate. The rule is an allowlist rather than an SDK blocklist, because a
 blocklist rots the day a vendor renames a distribution.
 
-THIS REPOSITORY HAS NO ``domain/`` PACKAGE. Hrz5 is a persistence-and-audit service, so its
-core sits flat beside the wiring: ``models.py`` (the audit event, citation and decision
-records), ``serialization.py`` (their stdlib JSON form), ``errors.py`` (the ingestion errors)
-and the ``ports/`` package (the Protocols and the identity scheme declarations).
-:data:`CORE_LAYERS` therefore names modules as well as directories, and the scan below accepts
-either. Everything else under ``src/observability`` is deliberately outside that boundary and
-free to depend on its framework: ``config.py`` and ``schemas.py`` are the YAML / pydantic edge,
-``container.py`` is the wiring, and ``api/``, ``cli/`` and ``adapters/`` are adapters by
-definition.
+THIS REPOSITORY HAS NO ``domain/`` PACKAGE. agent-observability is a persistence-and-audit service,
+so its core sits flat beside the wiring: ``models.py`` (the audit event, citation and decision
+records), ``serialization.py`` (their stdlib JSON form), ``errors.py`` (the ingestion errors) and
+the ``ports/`` package (the Protocols and the identity scheme declarations). :data:`CORE_LAYERS`
+therefore names modules as well as directories, and the scan below accepts either. Everything else
+under ``src/observability`` is deliberately outside that boundary and free to depend on its
+framework: ``config.py`` and ``schemas.py`` are the YAML / pydantic edge, ``container.py`` is the
+wiring, and ``api/``, ``cli/`` and ``adapters/`` are adapters by definition.
 
 Twin of the core-purity section of the fleet-wide portfolio gate,
 which repeats this scan across every repository in the workspace. This copy travels with the

@@ -1,6 +1,6 @@
-"""FastAPI application for Hrz5 Agent Observability, Audit & FinOps.
+"""FastAPI application for agent-observability Agent Observability, Audit & FinOps.
 
-Endpoints (SPEC §6, Hrz5):
+Endpoints (SPEC §6, agent-observability):
 
 * ``POST /v1/audit``  — write one already-redacted ``AuditEvent`` to immutable WORM
   storage (locked Cloud Logging bucket on the ``gcp`` profile). Returns ``202 Accepted``.
@@ -132,15 +132,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     container = Container(settings)
 
     app = FastAPI(
-        title="Hrz5 Agent Observability, Audit & FinOps",
+        title="agent-observability Agent Observability, Audit & FinOps",
         version=__version__,
         summary=(
             "WORM audit trail + OpenTelemetry tracing + token cost/latency FinOps for "
             "the Horizon agent platform."
         ),
         description=(
-            "Catalog system **Hrz5** (group `hrz`). Mandatory platform dependency of the "
-            "Rsk1 Compliance Assistant: Rsk1 routes every immutable audit record here via "
+            "Catalog system agent-observability (group `hrz`). Mandatory platform dependency of "
+            "the "
+            "compliance-advisory: compliance-advisory routes every immutable audit record here via "
             "`POST /v1/audit` (rule **R2**, compliance-grade WORM). Backed by a *locked* "
             "Cloud Logging bucket (~7y retention), a log sink, and a BigQuery FinOps "
             "export in the configured GCP region. Prompts/responses arrive already redacted "
