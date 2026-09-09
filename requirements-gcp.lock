@@ -30,7 +30,7 @@ google-api-core==2.36.0
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-logging
-google-auth==2.57.1
+google-auth==2.58.0
     # via
     #   google-api-core
     #   google-cloud-appengine-logging
