@@ -27,7 +27,7 @@ h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@3621bb6d0752877757f7c53b4e6c6140dd57cc9d
+hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@2cf15351dc968d908697b89237d4b5b42b1870a4
     # via agent-observability (pyproject.toml)
 httpcore==1.0.9
     # via httpx
