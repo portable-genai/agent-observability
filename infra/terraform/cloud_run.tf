@@ -1,6 +1,6 @@
 # cloud_run.tf — The agent-observability service on Cloud Run (us-central1).
 #
-# Runs the 'gcp' profile so audit writes hit the locked Cloud Logging bucket. Ingress is
+# Runs the 'gcp' profile so audit writes hit the Cloud Logging WORM bucket. Ingress is
 # internal: only other platform services (e.g. compliance-advisory) inside the VPC / project call it.
 
 # Dedicated runtime service account, least privilege.
@@ -10,7 +10,7 @@ resource "google_service_account" "run" {
   display_name = "agent-observability Agent Observability runtime SA"
 }
 
-# Write audit events to Cloud Logging (routed to the locked WORM bucket by the sink).
+# Write audit events to Cloud Logging (routed to the WORM bucket by the sink).
 resource "google_project_iam_member" "run_log_writer" {
   project = var.project_id
   role    = "roles/logging.logWriter"
@@ -143,7 +143,7 @@ output "service_uri" {
 }
 
 output "worm_bucket_id" {
-  description = "Locked WORM audit bucket id (rule R2)."
+  description = "WORM audit bucket id, locked when worm_locked = true (rule R2)."
   value       = google_logging_project_bucket_config.worm_audit.bucket_id
 }
 

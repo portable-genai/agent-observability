@@ -3,7 +3,7 @@
 The ``local`` profile runs the whole agent-observability service end to end with **no Google Cloud,
 no API key, and no running emulators by default**. For the one persistence concern
 agent-observability owns (``AuditSinkPort``), the local adapter is an append-only SQLite WORM
-stand-in for the locked Cloud Logging bucket: deterministic, seedable, read-back supported, pure
+stand-in for the Cloud Logging WORM bucket: deterministic, seedable, read-back supported, pure
 standard library.
 
 An optional higher-fidelity branch routes to the official **Firestore emulator** when

@@ -235,7 +235,7 @@ def _chained_store(operation: str) -> Any:
     if not hasattr(store, "verify_chain"):
         _fail(
             f"'audit {operation}' needs the chained local WORM store; profile "
-            f"'{_profile_label()}' uses the managed locked bucket, which provides "
+            f"'{_profile_label()}' uses the managed WORM bucket, which provides "
             "non-rewritability itself (verify it with the provider's own tooling).",
             code=_PROFILE_EXIT,
         )

@@ -1,7 +1,8 @@
 # bigquery.tf — FinOps: BigQuery dataset + a log sink that mirrors the audit stream into
 # it for token cost / latency dashboards.
 #
-# The LOCKED log bucket (logging_worm.tf) remains the WORM system of record (rule R2).
+# The WORM log bucket (logging_worm.tf) remains the system of record (rule R2), and a
+# production deployment locks it.
 # This BigQuery copy is purely ANALYTICAL — safe to query, join, and aggregate without
 # touching the immutable trail. See the FinOps note in README.md for example SQL.
 

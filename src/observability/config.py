@@ -5,7 +5,8 @@ A single :class:`Settings` object is loaded from ``config/settings.yaml`` with
 (``def __init__(self, settings: Settings) -> None``). The ``profile`` selects which
 adapter family the :class:`~observability.container.Container` binds:
 
-* ``gcp``    - Cloud Logging *locked bucket* WORM adapter (real SDK calls).
+* ``gcp``    - Cloud Logging WORM-bucket adapter (real SDK calls). A production deployment
+  locks the bucket; ``worm_locked`` has no default, so every deployment states it.
 * ``local``  - SDK-free, deterministic, append-only SQLite WORM stand-in (default for
   dev / test). Runs the whole service offline with no Google Cloud SDK, no API key, and
   no emulators. An optional Firestore-emulator branch is opt-in (see ``adapters/local``).

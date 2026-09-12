@@ -3,7 +3,7 @@
 Endpoints (SPEC §6, agent-observability):
 
 * ``POST /v1/audit``  — write one already-redacted ``AuditEvent`` to immutable WORM
-  storage (locked Cloud Logging bucket on the ``gcp`` profile). Returns ``202 Accepted``.
+  storage (the Cloud Logging WORM bucket on the ``gcp`` profile). Returns ``202 Accepted``.
 * ``GET  /v1/audit``  — read back recent redacted events for demos / regulator pulls,
   filtered by ``actor`` / ``action`` and bounded by ``limit``.
 * ``GET  /healthz``   — liveness.
@@ -13,7 +13,7 @@ part of this HTTP contract.
 
 The app builds a :class:`Container` once at startup and reuses the bound
 :class:`AuditSinkPort`. The active ``profile`` (``gcp`` | ``local`` | ``onprem``) decides
-whether writes hit the locked Cloud Logging bucket, the SDK-free SQLite WORM stand-in, or
+whether writes hit the Cloud Logging WORM bucket, the SDK-free SQLite WORM stand-in, or
 the fail-fast on-prem placeholder.
 
 The profile is resolved ONCE, by :func:`observability.config.resolve_profile`, and an unset

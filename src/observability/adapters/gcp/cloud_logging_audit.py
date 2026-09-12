@@ -3,10 +3,11 @@
 Backs :class:`~observability.ports.audit.AuditSinkPort` with **Cloud Logging**. Each
 :class:`~observability.models.AuditEvent` is written as a structured log entry to
 ``settings.logging.log_name``. A Cloud Logging **sink** (provisioned in
-``infra/terraform/logging_worm.tf``) routes that log into a **locked log bucket** —
-Write-Once-Read-Many, retention ``settings.logging.retention_days`` (~7 years) — so records are
-immutable: this is the agent-observability WORM guarantee that compliance-advisory depends on (rule
-R2, P-08).
+``infra/terraform/logging_worm.tf``) routes that log into a **WORM log bucket** with
+retention ``settings.logging.retention_days`` (~7 years). Records are immutable once the bucket
+is locked, which is what a production deployment does (``worm_locked = true``; the variable has
+no default, so every deployment states it): that is the agent-observability WORM guarantee
+compliance-advisory depends on (rule R2, P-08).
 
 Read-back (``GET /v1/audit``) queries the same log via the Cloud Logging API, newest
 first, bounded to a recent window — strictly for demos / regulator pulls, not bulk
@@ -42,7 +43,7 @@ _SEVERITY_BY_DECISION: dict[Decision, str] = {
 
 
 class CloudLoggingAuditAdapter:
-    """Write/read already-redacted ``AuditEvent`` records to/from the locked WORM bucket."""
+    """Write/read already-redacted ``AuditEvent`` records to/from the WORM log bucket."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings

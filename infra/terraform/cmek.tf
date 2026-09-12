@@ -91,7 +91,7 @@ resource "google_kms_crypto_key_iam_member" "service_agents" {
   member        = "serviceAccount:${each.value}"
 }
 
-# The locked WORM bucket's own CMEK binding lives on the bucket resource itself
+# The WORM bucket's own CMEK binding lives on the bucket resource itself
 # (logging_worm.tf, `cmek_settings`), because a Cloud Logging bucket takes its key at the
 # bucket level rather than from a project-wide default.
 
