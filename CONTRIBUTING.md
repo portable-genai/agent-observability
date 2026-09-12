@@ -11,7 +11,7 @@ pip install -e ".[dev]"     # NO Google Cloud SDK : local/test profile
 ```
 
 The default profile for development and CI is `local` (SDK-free SQLite WORM stand-in).
-The managed adapters (Cloud Logging locked WORM bucket, Cloud Trace) live behind the
+The managed adapters (Cloud Logging WORM bucket, Cloud Trace) live behind the
 `[gcp]` extra and are only needed for the `gcp` profile.
 
 ## The gate (must be green before you push)

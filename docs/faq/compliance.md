@@ -14,4 +14,5 @@ workflow.
 ## Is local SQLite regulator-grade WORM?
 
 No. It is a bounded append-only-by-API demo buffer and is not tamper-evident. The managed
-profile's locked Cloud Logging bucket carries the current WORM guarantee.
+profile's Cloud Logging bucket carries the WORM guarantee once a production deployment locks it
+(`worm_locked = true`, which has no default); the reference deployment declines the lock and says so.

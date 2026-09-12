@@ -8,7 +8,7 @@ CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwr
   FinOps. Runs **fully offline** (no Google Cloud, no API key, no emulators) on SQLite.
   It demonstrates the contract, not the managed profile's compliance-grade WORM control.
 - **Demo B (GCP)** the same service against the **real managed stack** in `asia-southeast1`:
-  a locked Cloud Logging WORM bucket (~7y retention) plus a BigQuery FinOps export. Same
+  a Cloud Logging WORM bucket (locked in production, ~7y retention) plus a BigQuery FinOps export. Same
   REST contract, different backend.
 
 > The synthetic audit corpus is **fictional** (invented prompts/responses, plausible but
@@ -26,7 +26,7 @@ CLI, no web UI), so the demo is **terminal / curl based** (no browser, no Playwr
 | **Python 3.12+** | yes | yes | the package pins `>=3.12` |
 | `curl` | for the REST variant | yes | drive the REST endpoints |
 | A GCP project + `gcloud` | no | yes | billing enabled; `asia-southeast1` available |
-| Terraform | no | yes | provisions the locked WORM bucket, log sink, BigQuery dataset |
+| Terraform | no | yes | provisions the WORM bucket, log sink, BigQuery dataset |
 | `[gcp]` extra installed | no | yes | `google-cloud-logging`, `google-cloud-bigquery` |
 
 Install / setup references (read these once):
@@ -82,7 +82,7 @@ You step through, pressing Enter each time:
 
 **What to point at:** every cited claim carries a regulator + version + page citation;
 only `redacted_*` fields are stored (P-04); FinOps rides in `metadata`; the local buffer
-has no public mutation route but is not tamper-evident. The GCP profile carries the locked
+has no public mutation route but is not tamper-evident. The GCP profile carries the
 WORM guarantee.
 
 To self-run with no prompts (CI / recording), set `DEMO_AUTO=1`:
@@ -145,7 +145,7 @@ curl -s 'localhost:8085/v1/audit?actor=analyst@bank.example&limit=20' | python -
 
 ## 3. Demo B (GCP): the managed WORM + FinOps stack
 
-Same REST contract, real managed services in `asia-southeast1`: a **locked** Cloud Logging
+Same REST contract, real managed services in `asia-southeast1`: a Cloud Logging
 WORM bucket (~7y retention) and a BigQuery FinOps export. Follow [README "Infrastructure (Terraform)"](README.md#infrastructure-terraform)
 for the authoritative steps; the short version:
 
@@ -167,12 +167,12 @@ cd infra/terraform
 cp terraform.tfvars.example terraform.tfvars    # set project_id
 make tf-init                                     # terraform init
 make tf-plan                                     # review the plan
-terraform apply                                  # WARNING: locking the WORM bucket is IRREVERSIBLE
+terraform apply                                  # WARNING: worm_locked has no default; true is IRREVERSIBLE
 cd ../..
 ```
 
-The locked bucket (`agent-observability-worm`, retention `2557d`, `locked = true`) is
-the WORM system of record; the BigQuery `agent_finops` dataset receives a log-sink copy for
+The bucket (`agent-observability-worm`; a production deployment states `worm_locked = true`
+and retention `2557d`, the reference deployment declines the lock) is the WORM system of record; the BigQuery `agent_finops` dataset receives a log-sink copy for
 analytics only. See the irreversibility banner in `infra/terraform/logging_worm.tf`.
 
 ### 3.3 Run and show
@@ -181,7 +181,7 @@ analytics only. See the irreversibility banner in `infra/terraform/logging_worm.
 make run PORT=8085                               # FastAPI on :8085, profile=gcp
 ```
 
-Then drive the same REST surface (writes now hit the locked Cloud Logging bucket):
+Then drive the same REST surface (writes now hit the Cloud Logging WORM bucket):
 
 ```bash
 curl -s localhost:8085/healthz
@@ -208,10 +208,11 @@ price = cost per actor / use case; p95 latency via `APPROX_QUANTILES`).
 ## 4. Talking points
 
 - **It is the system of record for what agents did.** `compliance-advisory` routes every interaction's audit
-  record here via `POST /v1/audit`; `agent-observability` owns the *locked* bucket, so `compliance-advisory` cannot tamper with
+  record here via `POST /v1/audit`; `agent-observability` owns the audit bucket, so `compliance-advisory` cannot tamper with
   or delete its own trail (the separation a regulator expects).
 - **WORM, not just "logs".** Append-only, no update/delete path; the retained count is
-  monotonic. Retention is ~7 years (`2557d`, `locked = true`).
+  monotonic. A production deployment locks the bucket for ~7 years (`worm_locked = true`,
+  `2557d`); the lock has no default, so every deployment names it.
 - **Redact-before-store.** Only `redacted_*` fields are persisted (rule R1 upstream, P-04
   here); `agent-observability` never sees raw PII.
 - **Provenance is the point.** Every claim carries `[source_id, REGULATOR vX p.N] url`, so
@@ -238,6 +239,6 @@ price = cost per actor / use case; p95 latency via `APPROX_QUANTILES`).
 | GCP region / permission errors | Confirm `asia-southeast1` and the app SA's roles; see [README "Infrastructure (Terraform)"](README.md#infrastructure-terraform). |
 
 **Stop / clean up:** Ctrl-C `make run`. The guided script writes only an ephemeral temp-dir
-SQLite file (safe to delete). For GCP, the locked bucket and its audit trail are immutable
+SQLite file (safe to delete). For GCP, a locked bucket and its audit trail are immutable
 by design; to halt ingest, scale the Cloud Run service to zero or remove the app SA's write
 role (the trail remains intact). `make clean` removes local caches and build artifacts.

@@ -3,35 +3,35 @@
 # This is the compliance heart of agent-observability (catalog system agent-observability; rule R2). compliance-advisory (and any other
 # catalog system) routes immutable audit records here via POST /v1/audit; the
 # CloudLoggingAuditAdapter writes already-redacted AuditEvents to the log below, and this
-# sink routes them into a LOCKED log bucket — Write-Once-Read-Many.
+# sink routes them into a WORM-capable log bucket; a production deployment locks it, and the
+# trail is Write-Once-Read-Many only then.
 #
 # General Principle map:
-#   R2 / P-08 (immutable audit / WORM): retention = var.retention_days (~7 years) and
-#         locked = true make the bucket WORM. Records cannot be edited or deleted for the
-#         full window.
+#   R2 / P-08 (immutable audit / WORM): retention = var.retention_days (~7 years when locked)
+#         and locked = var.worm_locked make the bucket WORM. Records cannot be edited or
+#         deleted for the full window once locked.
 #   P-03 (residency): bucket location is us-central1.
 #   P-04 (no raw PII in logs): only redacted prompts/responses are written (enforced in
 #         the app + upstream A1); DATA_READ audit logging records every read of the store.
 #
 # ############################################################################ #
 # # WARNING: LOCKING IS IRREVERSIBLE.                                         # #
-# # var.worm_locked (DEFAULT TRUE) PERMANENTLY prevents reducing retention or # #
+# # var.worm_locked = true PERMANENTLY prevents reducing retention or         # #
 # # deleting this bucket for the full retention window (var.retention_days).  # #
 # # You CANNOT undo it, not even with project-owner rights, and `terraform    # #
-# # destroy` will NOT remove it. Confirm retention_days before the first      # #
-# # apply. To trial without locking, set worm_locked = false (NOT compliant   # #
-# # for production: it breaks the rule R2 WORM guarantee compliance-advisory depends on).    # #
+# # destroy` will NOT remove it. The variable has NO DEFAULT: every plan      # #
+# # names it. Confirm retention_days before the first apply. A reference or   # #
+# # evaluation stack sets worm_locked = false and says why (NOT compliant for # #
+# # production: it gives up the rule R2 guarantee compliance-advisory uses).  # #
 # ############################################################################ #
 #
 # This was the literal `locked = true`, and the banner above used to tell the operator to
 # edit this line. That is the wrong shape for a per-deployment decision: it makes the only
 # way to trial the stack a source edit, which no deployment configuration records and no
-# review sees. It also meant a first apply locked the trail for seven years before anyone
-# had chosen to, which is what happened to this deployment on its own first apply.
-#
-# The default stays true, so a fork inherits the compliant posture and nothing about an
-# existing stack changes. What is new is that declining the lock is now something a
-# deployment can SAY rather than something it has to patch.
+# review sees. Making it a variable was not enough either: with a default of true, the first
+# apply of this stack locked the trail for seven years before anyone had chosen to. An unset
+# value may take a reviewed default; it may never take an irreversible one, so the variable
+# now has no default and a plan refuses until the deployment states it (variables.tf).
 #
 # Note for an already-locked bucket: setting this to false will not unlock it. The API
 # refuses, as it should. The knob governs the first apply.
@@ -41,11 +41,13 @@ resource "google_logging_project_bucket_config" "worm_audit" {
   location = var.region # us-central1 (P-03)
   # bucket_id matches settings.yaml logging.bucket_id
   bucket_id   = "agent-observability-worm"
-  description = "WORM audit bucket for catalog system agent-observability (locked, ~7y retention, rule R2)."
-  # retention_days defaults to 2557 (~7 years) — see var.retention_days.
+  description = "WORM audit bucket for catalog system agent-observability (WORM when worm_locked = true; ~7y retention floor binds when locked, rule R2)."
+  # retention_days defaults to 2557 (~7 years); the floor is conditional on the lock, see var.retention_days.
   retention_days = var.retention_days
 
-  # IRREVERSIBLE: see WARNING banner above. WORM compliance (rule R2) requires this true.
+  # IRREVERSIBLE when true: see WARNING banner above. WORM compliance (rule R2) requires true,
+  # and the variable has no default, so no plan can lock this bucket without the deployment
+  # saying so.
   locked = var.worm_locked
 
   # Bank-held key over the WORM trail itself (P-09, practice D5). Without this the bucket
@@ -67,11 +69,11 @@ locals {
   audit_log_name = "agent-observability-audit"
 }
 
-# Route the audit log stream into the locked WORM bucket.
+# Route the audit log stream into the WORM bucket.
 resource "google_logging_project_sink" "audit_to_worm" {
   project     = var.project_id
   name        = "agent-observability-to-worm"
-  description = "Routes the agent-observability-audit log to the locked WORM bucket (rule R2)."
+  description = "Routes the agent-observability-audit log to the WORM bucket (rule R2)."
 
   destination = "logging.googleapis.com/${google_logging_project_bucket_config.worm_audit.id}"
 

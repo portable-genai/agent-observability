@@ -30,7 +30,7 @@ file that changes):
 
 | Port | On-prem file | What to implement |
 |------|--------------|-------------------|
-| `AuditSinkPort` | `onprem/audit.py` | An on-prem immutable (Write-Once-Read-Many) audit store with actor/action-filtered read-back, replacing the locked Cloud Logging bucket (rule R2, P-08) |
+| `AuditSinkPort` | `onprem/audit.py` | An on-prem immutable (Write-Once-Read-Many) audit store with actor/action-filtered read-back, replacing the Cloud Logging WORM bucket (rule R2, P-08) |
 
 One more binding decides whether the deployment may be reached at all, and it is what gets you
 off loopback. The shipped `onprem` caller-identity scheme (`onprem/identity.py`) declares
@@ -64,7 +64,7 @@ domain depends only on a Protocol, the regulator-facing property that matters, a
 WORM trail of already-redacted prompt/response events with page-cited provenance, survives a
 platform change unchanged, and the migration is a bounded, testable piece of work rather
 than a rewrite. The one caveat to carry into an on-prem build (recorded in
-`docs/practices-audit.md`, check C9): the managed locked bucket is where tamper-evidence is
+`docs/practices-audit.md`, check C9): the managed bucket, locked in production, is where tamper-evidence is
 guaranteed today, so the on-prem `AuditSinkPort` implementation must supply an equivalent
 immutable store (append-only with no update/delete path, ideally hash-chained with an
 external head anchor) rather than relying on the local windowed stand-in.

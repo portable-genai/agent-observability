@@ -28,7 +28,7 @@ Keep these portable contracts stable:
 Institution-owned surfaces are `config/settings.yaml`, adapter implementations,
 `infra/terraform/`, S2S registration, retention/legal approval, notification routing and
 the regulator-specific control crosswalk. Local SQLite is a bounded demo buffer, not a
-replacement for the managed locked WORM store.
+replacement for the managed WORM store, which a production deployment locks.
 
 ## Preview and apply a rename
 

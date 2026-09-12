@@ -82,28 +82,48 @@ variable "vpc_sc_access_levels" {
 
 variable "retention_days" {
   type        = number
-  description = "WORM audit-bucket retention in days. ~7 years (rule R2). IRREVERSIBLE once locked."
+  description = <<-EOT
+    WORM audit-bucket retention in days. Default 2557 (~7 years, rule R2).
+
+    The 2557-day compliance floor binds whenever worm_locked = true, which is the production
+    posture. It is NOT applied to an unlocked stack, where the retention policy is removable by
+    a project owner anyway and therefore evidences routing and coverage rather than
+    immutability. That lets a reference or evaluation deployment keep a short window while it
+    stays destroyable, without weakening what a production deployment gets: turning the lock
+    on re-imposes the floor at plan time.
+  EOT
   default     = 2557
+
+  validation {
+    condition     = var.worm_locked ? var.retention_days >= 2557 : var.retention_days >= 1
+    error_message = "A LOCKED stack must retain at least 2557 days (~7 years, rule R2); an unlocked stack must still retain at least 1 day."
+  }
 }
 
 variable "worm_locked" {
+  type        = bool
   description = <<-EOT
     Lock the WORM audit bucket (rule R2).
     #########################################################################
     # WARNING: LOCKING IS IRREVERSIBLE. With true, the bucket and its       #
     # retention window can NEVER be reduced or deleted until every entry    #
-    # ages out (2557 days by default), not even with project-owner rights.  #
+    # ages out (retention_days), not even with project-owner rights.        #
     #########################################################################
-    true (the default) is REQUIRED for a compliant production deploy: the audit trail is
-    Write-Once-Read-Many only when locked. Set false ONLY for evaluation/demo stacks that
-    must remain deletable (terraform destroy works); that posture is NOT compliant, and
-    compliance-advisory depends on the guarantee it gives up.
 
-    Setting this false against an ALREADY-locked bucket does not unlock it. The API refuses,
-    as it should. This governs the first apply.
+    NO DEFAULT, and that is the decision. An irreversible control must never arrive because a
+    deployment said nothing, so there is no default of true: the previous default locked this
+    stack's bucket for seven years on a first apply nobody had reviewed. A fork running this
+    as a system of record must not quietly lose the WORM guarantee either, so there is no
+    default of false. Every plan names it.
+
+    true is the compliant production posture: the audit trail is Write-Once-Read-Many only
+    when locked, and compliance-advisory depends on that guarantee. false keeps the bucket,
+    its retention and its sink, and leaves the bucket destroyable: a reference or evaluation
+    posture, NOT WORM, and the deployment tfvars says why.
+
+    Setting false against an ALREADY-locked bucket does not unlock it. The API refuses, as it
+    should. This governs the first apply.
   EOT
-  type        = bool
-  default     = true
 }
 
 variable "container_image" {

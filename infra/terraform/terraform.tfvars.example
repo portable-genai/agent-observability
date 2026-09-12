@@ -12,7 +12,14 @@ release_approver_service_accounts = [
 ]
 
 # region is pinned to asia-southeast1 and validated; no need to set it.
-# retention_days defaults to 2557 (~7 years). LOCKING IS IRREVERSIBLE — see logging_worm.tf.
+
+# WORM audit lock (rule R2). NO default: every deployment names it, because an irreversible
+# control must never arrive because a file said nothing. true is the compliant production
+# posture shown here and is IRREVERSIBLE for the retention window; the ~7-year floor below binds
+# only when locked. A reference or evaluation stack states worm_locked = false with its reason
+# and may keep a short retention_days; the bucket then stays destroyable and is NOT WORM.
+worm_locked    = true
+retention_days = 2557
 
 # container_image = "asia-southeast1-docker.pkg.dev/your-gcp-project/hrz/agent-observability:latest"
 

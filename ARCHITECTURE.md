@@ -46,7 +46,7 @@ profile change, which is the no-lock-in promise (P-02).
 flowchart LR
   client["`compliance-advisory` remote audit client / CLI / API"] --> app["FastAPI app + Container"]
   app --> port["AuditSinkPort (record, read_recent)"]
-  port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: locked Cloud Logging WORM bucket, BigQuery FinOps export"]
+  port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: Cloud Logging WORM bucket (locked in production), BigQuery FinOps export"]
   port -->|"profile=local"| local["LocalAppendOnlyAuditAdapter: append-only SQLite WORM stand-in, seedable, SDK-free"]
   port -->|"profile=onprem"| onprem["OnPremAuditAdapter: fail-fast Google Distributed Cloud placeholder"]
   local -.->|"opt-in: FIRESTORE_EMULATOR_HOST"| emu["Firestore emulator (lazy google import)"]
@@ -56,7 +56,7 @@ flowchart LR
 
 | Port | Protocol | gcp adapter | local adapter | onprem adapter |
 |---|---|---|---|---|
-| audit | `AuditSinkPort` | `gcp.cloud_logging_audit:CloudLoggingAuditAdapter` (locked Cloud Logging bucket, lazy SDK) | `local.audit:LocalAppendOnlyAuditAdapter` (append-only SQLite WORM, seedable, optional Firestore emulator) | `onprem.audit:OnPremAuditAdapter` (fail-fast, `NotImplementedError`) |
+| audit | `AuditSinkPort` | `gcp.cloud_logging_audit:CloudLoggingAuditAdapter` (Cloud Logging WORM bucket, lazy SDK) | `local.audit:LocalAppendOnlyAuditAdapter` (append-only SQLite WORM, seedable, optional Firestore emulator) | `onprem.audit:OnPremAuditAdapter` (fail-fast, `NotImplementedError`) |
 
 The dotted paths in `config/settings.yaml` under `adapters:` are the build contract; the
 contract test (`tests/test_adapter_parity.py`) reads them and proves, for both `local` and
@@ -76,7 +76,7 @@ sequenceDiagram
   API->>Port: record(event)
   Port->>Store: append immutable record
   Store-->>API: 202 Accepted
-  Note over API,Store: local appends to SQLite WORM, gcp writes the locked bucket, onprem raises
+  Note over API,Store: local appends to SQLite WORM, gcp writes the WORM bucket, onprem raises
   `compliance-advisory`->>API: GET /v1/audit actor and action and limit
   API->>Port: read_recent(...)
   Port->>Store: query newest first
@@ -86,9 +86,11 @@ sequenceDiagram
 ## Data residency and immutability
 
 Every managed resource is pinned to the selected region (default `asia-southeast1`). The `gcp` audit store
-is a *locked* Cloud Logging bucket (retention 2557 days, ~7 years): writes are
+is a Cloud Logging bucket whose lock is `var.worm_locked`, a variable with no default, so every
+deployment names it. A production deployment locks it (retention 2557 days, ~7 years): writes are then
 Write-Once-Read-Many and the bucket cannot be unlocked, so `compliance-advisory` cannot tamper with or delete
-its own audit trail. The `local` SQLite stand-in mirrors that guarantee off cloud: SQLite triggers refuse UPDATE
+its own audit trail. The reference deployment declines the lock in its tfvars and says why; its
+bucket keeps the sink and the retention and stays destroyable. The `local` SQLite stand-in mirrors that guarantee off cloud: SQLite triggers refuse UPDATE
 and refuse DELETE outside a recorded retention prune, every record is hash-chained to its
 predecessor, and both the chain head and the retention-prune watermark are anchored in an
 external file, so a truncated tail and a prefix deletion dressed up as a prune are both

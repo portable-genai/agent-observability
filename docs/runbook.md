@@ -10,7 +10,7 @@ and ingests OpenTelemetry traces.
 
 ```bash
 # 1. Provision infra (review the plan first; the WORM bucket lock is IRREVERSIBLE when
-#    locked = true, which is the compliant default in logging_worm.tf).
+#    worm_locked = true. The variable has NO default: the plan refuses until you state it).
 cd infra/terraform
 cp terraform.tfvars.example terraform.tfvars   # set project_id (no default, on purpose)
 # The backend is a partial "gcs" block: the state location is a deployment input, never
@@ -80,13 +80,16 @@ carry the same rules, so promotion changes the mode and nothing else.
 
 ## 3. Retention and the WORM lock
 
-The audit bucket retention is `retention_days` (default `2557`, ~7 years) and the bucket is
-`locked = true` in `logging_worm.tf`. **Locking is irreversible**: retention cannot be
-reduced and the bucket cannot be deleted for the full window, not even with project-owner
-rights, and `terraform destroy` will not remove it. Confirm `retention_days` before the
-first apply. To trial without locking, set `locked = false` in `logging_worm.tf` (NOT
-compliant for production; it breaks the rule R2 WORM guarantee `compliance-advisory` depends on). A log sink
-routes `agent-observability-audit` plus all Cloud Audit Logs into the locked bucket, and an
+The audit bucket is `locked = var.worm_locked` in `logging_worm.tf`, and `worm_locked` has **no
+default**: a plan refuses until the deployment states it, because an irreversible control must
+never arrive because a file said nothing. A production deployment sets `worm_locked = true` with
+`retention_days = 2557` (~7 years; that floor binds only when locked). **Locking is irreversible**:
+retention cannot be reduced and the bucket cannot be deleted for the full window, not even with
+project-owner rights, and `terraform destroy` will not remove it. Confirm `retention_days` before
+the first apply. A reference or evaluation deployment sets `worm_locked = false` in its own tfvars and
+says why; that posture is NOT compliant for production,
+because it gives up the rule R2 WORM guarantee `compliance-advisory` depends on. A log sink
+routes `agent-observability-audit` plus all Cloud Audit Logs into the bucket, and an
 `audit_config` enables `DATA_READ` so every read of the store is itself audited (P-08).
 Only already-redacted prompts/responses are ever written (P-04, R1); `agent-observability` never redacts.
 
@@ -158,7 +161,7 @@ Point agents (`compliance-advisory` included) at the collector with `OTEL_EXPORT
 auditor can pivot from an audit record to its full reasoning trace. Token cost and latency
 ride in `AuditEvent.metadata` (`tokens_in` / `tokens_out` / `latency_ms`); a log sink
 mirrors the audit log into the `agent_finops` BigQuery dataset for cost/latency dashboards.
-The locked bucket stays the WORM system of record, so the BigQuery copy is purely
+The WORM bucket stays the system of record, so the BigQuery copy is purely
 analytical: safe to query and aggregate without touching the immutable trail.
 
 ## 6. Local audit store: a windowed but tamper-evident buffer
@@ -214,14 +217,14 @@ the live witness is the same laundering move as an append, taken through the ope
 surface. Once the restored store verifies, `audit reanchor --confirm` gives it a witness.
 
 The window is still a window: it holds the most recent `OBSERVABILITY_MAX_EVENTS` records,
-not seven years of them. The retention control remains the managed locked Cloud Logging
+not seven years of them. The retention control remains the managed Cloud Logging
 bucket, which is the deploy posture. Use `local` for demos, dev and the offline gate.
 
 ## 7. Kill switch
 
 To stop serving without tearing down state: scale the Cloud Run deployment to zero, or
 remove the caller service accounts from `OBSERVABILITY_S2S_ALLOWED_CALLERS` (and their
-`run.invoker` binding) so no vertical can write or read. The locked WORM bucket and every
+`run.invoker` binding) so no vertical can write or read. The WORM bucket and every
 record already written remain intact.
 
 ## 8. Common failures

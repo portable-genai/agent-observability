@@ -11,7 +11,7 @@
 | Concern | What it does | Where it lives |
 |---|---|---|
 | **Tracing** | OpenTelemetry / Cloud Trace ingest of agent reasoning spans | `infra/otel/` (a collector: **infra, not HTTP contract**) |
-| **Audit (rule R2)** | Immutable **Write-Once-Read-Many** storage of already-redacted prompt/response events in a **locked** Cloud Logging bucket | `POST /v1/audit`, `GET /v1/audit` |
+| **Audit (rule R2)** | Immutable **Write-Once-Read-Many** storage of already-redacted prompt/response events in a Cloud Logging bucket that production deployments lock | `POST /v1/audit`, `GET /v1/audit` |
 | **FinOps** | Token cost / latency dashboards over a BigQuery export of the audit + trace streams | `infra/terraform` + the [FinOps note](#finops-bigquery-export) |
 
 The deployment region is configurable, defaults to **`asia-southeast1`**, and is validated
@@ -39,17 +39,18 @@ pipeline ends with `audit.record(redacted)`, SPEC §5). In the full platform dep
 flowchart LR
   `compliance-advisory`["`compliance-advisory` (compliance-advisory)"] --> adapter["RemoteAuditAdapter.record(AuditEvent)"]
   adapter -->|"POST {OBSERVABILITY_URL}/v1/audit<br/>default http://localhost:8085"| `agent-observability`["`agent-observability` service"]
-  `agent-observability` -->|"202 Accepted"| worm["locked Cloud Logging WORM bucket"]
+  `agent-observability` -->|"202 Accepted"| worm["Cloud Logging WORM bucket (locked in production)"]
 ```
 
 The body `compliance-advisory` sends is `to_jsonable(AuditEvent)`; `agent-observability`'s `AuditEventModel` accepts it
-field-for-field (SPEC §6, `agent-observability` contract). Because `agent-observability` owns the *locked* bucket, `compliance-advisory` cannot
+field-for-field (SPEC §6, `agent-observability` contract). Because `agent-observability` owns the audit bucket, `compliance-advisory` cannot
 tamper with or delete its own audit trail, exactly the separation a regulator expects.
 
 * **Rule R1** (redaction at the boundary): prompts/responses arrive **already redacted**
   by `agent-guardrail-gateway`. `agent-observability` never redacts; it serialises and stores.
-* **Rule R2** (immutable audit): `agent-observability` is the WORM store. Retention is `2557d` (~7 years),
-  `locked = true`.
+* **Rule R2** (immutable audit): `agent-observability` is the WORM store. A production deployment
+  locks the bucket (`worm_locked = true`, retention `2557d`, ~7 years); the reference deployment
+  declines the lock and records why.
 
 ---
 
@@ -140,18 +141,18 @@ flowchart LR
   subgraph `agent-observability`["`agent-observability` service"]
     app["FastAPI app"] --> container["Container"] --> port["AuditSinkPort"]
   end
-  port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: locked Cloud Logging bucket (WORM, ~7y), lazy google-cloud-logging import"]
+  port -->|"profile=gcp"| gcp["CloudLoggingAuditAdapter: Cloud Logging WORM bucket (locked in production, ~7y), lazy google-cloud-logging import"]
   port -->|"profile=local"| local["LocalAppendOnlyAuditAdapter: append-only SQLite WORM stand-in, SDK-free, seedable, optional Firestore emulator"]
   port -->|"profile=onprem"| onprem["OnPremAuditAdapter: fail-fast Google Distributed Cloud placeholder, NotImplementedError"]
 ```
 
 | Profile | Backend | Google Cloud SDK | Use |
 |---|---|---|---|
-| `gcp` | locked Cloud Logging bucket (WORM, ~7y) + BigQuery FinOps export | required (`[gcp]` extra), imports **lazy** | production compliance store |
+| `gcp` | Cloud Logging WORM bucket (locked in production, ~7y) + BigQuery FinOps export | required (`[gcp]` extra), imports **lazy** | production compliance store |
 | `local` | append-only SQLite WORM stand-in (`~/.observability/audit.db` or `:memory:`) | none | dev / test default, runs fully offline |
 | `onprem` | fail-fast placeholder (constructs + satisfies the Protocol, every method raises) | none | Google Distributed Cloud migration target |
 
-* **`gcp`**: the compliance store. Writes to a *locked* Cloud Logging bucket; read-back
+* **`gcp`**: the compliance store. Writes to a Cloud Logging WORM bucket (locked in production); read-back
   queries the Cloud Logging API. SDK imports are **lazy** so the module imports without
   the SDK present.
 * **`local`**: an append-only, bounded, thread-safe SQLite WORM stand-in. Deterministic
@@ -230,7 +231,7 @@ from one an operator deliberately emptied.
 | `OBSERVABILITY_LOCAL_ANCHOR` | `<audit path>.anchor.json` | external chain-head anchor; put it on another volume |
 | `OBSERVABILITY_ALLOWED_REGIONS` | `asia-southeast1` | residency allowlist; an unlisted `GCP_REGION` fails closed at load, and so does an allowlist set to an empty value |
 | `FIRESTORE_EMULATOR_HOST` | unset | optional: route the local store to the Firestore emulator |
-| `OBSERVABILITY_WORM_BUCKET` | `agent-observability-worm` | locked log bucket id (gcp) |
+| `OBSERVABILITY_WORM_BUCKET` | `agent-observability-worm` | WORM log bucket id (gcp) |
 | `OBSERVABILITY_LOG_NAME` | `agent-observability-audit` | structured log name (gcp) |
 | `OBSERVABILITY_RETENTION_DAYS` | `2557` | WORM retention (~7y, rule R2) |
 | `OBSERVABILITY_READBACK_DAYS` | `30` | read-back window for `GET /v1/audit` |
@@ -266,11 +267,11 @@ To also instrument *this* service's own HTTP spans, install the `[otel]` extra.
 ## FinOps: BigQuery export
 
 Token cost and latency are carried in `AuditEvent.metadata` (`tokens_in`, `tokens_out`,
-`latency_ms`). For dashboards, the locked audit log is exported to **BigQuery** via a log
+`latency_ms`). For dashboards, the audit log is exported to **BigQuery** via a log
 sink, then queried by Looker Studio / a BigQuery dashboard.
 
 Terraform provisions the `agent_finops` BigQuery dataset (`infra/terraform/bigquery.tf`)
-and a sink that mirrors the audit log into it. Because the **locked bucket remains the
+and a sink that mirrors the audit log into it. Because the **WORM bucket remains the
 WORM system of record**, the BigQuery copy is purely analytical: safe to query, join,
 and aggregate without touching the immutable trail. Example cost rollup:
 
@@ -297,9 +298,11 @@ Multiply token sums by the model's per-token price to get cost per actor / use c
 `infra/terraform/` provisions every managed resource in `var.region` (default
 `asia-southeast1`):
 
-* **Locked WORM log bucket**: `agent-observability-worm`, retention `2557d`,
-  `locked = true`. **⚠ Locking is irreversible** (see the banner in `logging_worm.tf`).
-* **Log sink**: routes `agent-observability-audit` into the locked bucket.
+* **WORM-capable log bucket**: `agent-observability-worm`. `worm_locked` has **no default**: every
+  deployment names it. A production deployment sets `true` (retention `2557d`; the ~7-year floor binds
+  only when locked). **⚠ Locking is irreversible** (see the banner in `logging_worm.tf`); the
+  reference deployment declines it in its tfvars and says why.
+* **Log sink**: routes `agent-observability-audit` into that bucket.
 * **BigQuery dataset**: `agent_finops` + a sink mirroring the audit log for FinOps.
 * **Cloud Run**: the `agent-observability` service, ingress-internal, `gcp` profile.
 * **`audit_config`**: `DATA_READ` (plus `DATA_WRITE` / `ADMIN_READ`) so every *read* of
@@ -326,9 +329,9 @@ terraform init && terraform plan
 | Item | Where |
 |---|---|
 | **R1** redaction at the boundary | enforced upstream (`agent-guardrail-gateway`); `agent-observability` never sees raw PII |
-| **R2** immutable WORM audit | locked Cloud Logging bucket, `retention_days=2557`, `locked=true`; hash-chained, trigger-enforced, externally anchored offline stand-in (`agent-observability audit verify`) |
+| **R2** immutable WORM audit | Cloud Logging bucket, `locked = var.worm_locked` with no default; production locks it at `retention_days=2557`; hash-chained, trigger-enforced, externally anchored offline stand-in (`agent-observability audit verify`) |
 | **P-04** no raw PII in logs | only `redacted_*` fields stored |
-| **P-08** immutable audit + read auditing | locked bucket + `DATA_READ` audit config |
+| **P-08** immutable audit + read auditing | WORM bucket (locked in production) + `DATA_READ` audit config |
 | **P-03** data residency | `allowed_regions` validated at `terraform plan`, by Org Policy, and again by the app at load |
 | **P-09** encryption | bank-held CMEK bound per service (`infra/terraform/cmek.tf`), rotation as a variable |
 | **P-02** no lock-in | ports & adapters; `local` runs the domain off-cloud, `onprem` stub satisfies the same Protocol |
