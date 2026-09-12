@@ -1,4 +1,4 @@
-# logging_worm.tf — agent-observability trail: locked Cloud Logging bucket + sink + audit config.
+# logging_worm.tf — agent-observability trail: Cloud Logging WORM bucket + sink + audit config.
 #
 # This is the compliance heart of agent-observability (catalog system agent-observability; rule R2). compliance-advisory (and any other
 # catalog system) routes immutable audit records here via POST /v1/audit; the

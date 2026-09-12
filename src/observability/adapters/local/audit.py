@@ -1,6 +1,6 @@
 """Local audit adapter (``AuditSinkPort``) — append-only, hash-chained SQLite WORM stand-in.
 
-The ``local`` profile's offline stand-in for the **Cloud Logging locked WORM bucket**: an
+The ``local`` profile's offline stand-in for the **Cloud Logging WORM bucket**: an
 append-only SQLite table (or an in-memory table for ``:memory:``) that records already
 redacted audit events and supports read-back, newest first, filtered by actor / action.
 Append-only is enforced *in the store* by SQLite triggers, not merely by the absence of an
@@ -87,7 +87,7 @@ the API, the constructor, the prune) touches it.
   export and restore refuse to run against it rather than pretend otherwise.
 
 Keep the anchor on a different volume or under different credentials. The managed ``gcp``
-profile does not rely on any of this: the locked Cloud Logging bucket provides
+profile does not rely on any of this: a locked Cloud Logging bucket provides
 non-rewritability itself.
 
 Retention pruning stays verifiable: ``max_events`` prunes oldest rows first, and the prune
@@ -321,7 +321,7 @@ class LocalAppendOnlyAuditAdapter(HashChainedAuditLog):
                 ),
             )
             # Prune oldest rows beyond capacity (read-back demo bound; the managed sink
-            # retains everything for ~7y in the locked bucket). The prune is RECORDED as a
+            # retains everything for ~7y in the WORM bucket). The prune is RECORDED as a
             # watermark first, so the retained window still chains onto a known hash.
             self._prune_to_capacity()
             self._conn.commit()
