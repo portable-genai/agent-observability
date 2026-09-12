@@ -1,12 +1,12 @@
 # agent-observability Agent Observability, Audit & FinOps — runtime configuration.
 #
 # Switch the whole backend by setting OBSERVABILITY_PROFILE:
-#   gcp    -> Cloud Logging locked-bucket WORM adapter (needs the [gcp] extra installed)
+#   gcp    -> Cloud Logging WORM-bucket adapter (needs the [gcp] extra installed)
 #   local  -> SDK-free append-only SQLite WORM stand-in (dev / test default; no GCP SDK,
 #            no API key, no emulators; optional Firestore-emulator opt-in)
 #   onprem -> fail-fast Google Distributed Cloud migration placeholder (NotImplementedError)
 #
-# Production default is 'gcp' once the [gcp] extra and the locked bucket are provisioned;
+# Production default is 'gcp' once the [gcp] extra and the WORM bucket are provisioned;
 # the dev / test default (Makefile, CI, .env.example) is 'local'.
 
 project_id: ${GOOGLE_CLOUD_PROJECT:-your-gcp-project}

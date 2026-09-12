@@ -23,7 +23,7 @@ and HTTP surface run unchanged on all three; only the bound adapters differ (P-0
 
 | Profile | Audit backend | Google Cloud SDK | Emulator | Role |
 |---|---|---|---|---|
-| `gcp` | locked Cloud Logging bucket (WORM, ~7y) + BigQuery FinOps export | required (`[gcp]` extra), imports lazy | n/a | production compliance store |
+| `gcp` | Cloud Logging WORM bucket (locked in production, ~7y) + BigQuery FinOps export | required (`[gcp]` extra), imports lazy | n/a | production compliance store |
 | `local` | append-only SQLite WORM stand-in (`~/.observability/audit.db` or `:memory:`) | none | optional Firestore (opt-in) | dev / test default, fully offline |
 | `onprem` | fail-fast placeholder (constructs, satisfies the Protocol, every method raises) | none | n/a | Google Distributed Cloud migration target |
 
