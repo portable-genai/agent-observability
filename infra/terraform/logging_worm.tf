@@ -92,6 +92,7 @@ resource "google_logging_project_sink" "audit_to_worm" {
 # DATA_WRITE and ADMIN_READ are added explicitly alongside DATA_READ.
 # --------------------------------------------------------------------------- #
 resource "google_project_iam_audit_config" "data_access" {
+  count   = var.manage_audit_config ? 1 : 0
   project = var.project_id
   service = "allServices"
 
