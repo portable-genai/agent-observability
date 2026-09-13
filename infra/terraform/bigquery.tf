@@ -46,6 +46,22 @@ resource "google_bigquery_dataset" "finops" {
     }
   }
 
+  # The BigQuery sink's writer identity, named here rather than granted by a separate
+  # google_bigquery_dataset_iam_member. This block is AUTHORITATIVE for the dataset's access
+  # list, so a member resource beside it is not additive: the dataset removes the grant the
+  # member adds and the member adds it back, and the stack never converges. Found the day the
+  # stack could first be applied whole (2026-09-14), because until then the member had never
+  # been created and the conflict had nothing to show.
+  #
+  # It cannot reference google_logging_project_sink.audit_to_bigquery.writer_identity: the sink
+  # names this dataset as its destination, so reading the sink here is a cycle. The identity is
+  # instead derived from the project number, which is what Cloud Logging mints for a
+  # unique_writer_identity sink and is stable for the life of the project.
+  access {
+    role          = "WRITER"
+    user_by_email = "service-${data.google_project.this.number}@gcp-sa-logging.iam.gserviceaccount.com"
+  }
+
   depends_on = [
     google_project_service.required,
     google_kms_crypto_key_iam_member.service_agents,
@@ -67,12 +83,4 @@ resource "google_logging_project_sink" "audit_to_bigquery" {
   bigquery_options {
     use_partitioned_tables = true
   }
-}
-
-# Let the BigQuery sink's writer identity write into the dataset.
-resource "google_bigquery_dataset_iam_member" "sink_writer" {
-  project    = var.project_id
-  dataset_id = google_bigquery_dataset.finops.dataset_id
-  role       = "roles/bigquery.dataEditor"
-  member     = google_logging_project_sink.audit_to_bigquery.writer_identity
 }
