@@ -89,8 +89,12 @@ project-owner rights, and `terraform destroy` will not remove it. Confirm `reten
 the first apply. A reference or evaluation deployment sets `worm_locked = false` in its own tfvars and
 says why; that posture is NOT compliant for production,
 because it gives up the rule R2 WORM guarantee `compliance-advisory` depends on. A log sink
-routes `agent-observability-audit` plus all Cloud Audit Logs into the bucket, and an
-`audit_config` enables `DATA_READ` so every read of the store is itself audited (P-08).
+routes `agent-observability-audit` into the bucket, and only that log: Cloud Audit Logs stay in
+`_Default`, where the project already keeps them for 30 days. With `manage_audit_config = true` an
+`audit_config` enables `DATA_READ` so every read of the store is itself audited (P-08); the
+reference deployment leaves it false, and its posture alerts and availability SLO behind
+`posture_alerts_enabled` and `slo_enabled`, both false, because Cloud Monitoring bills every
+metric-based alert condition and nobody is paged on a demo.
 Only already-redacted prompts/responses are ever written (P-04, R1); `agent-observability` never redacts.
 
 ## 4. Service-to-service auth

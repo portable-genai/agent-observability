@@ -283,3 +283,27 @@ variable "manage_audit_config" {
     project genuinely wants data-access logging on.
   EOT
 }
+
+variable "posture_alerts_enabled" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Whether this stack creates the posture alert policies and the log-based metrics behind
+    them (VPC-SC dry-run violations, residency and CMEK policy denials).
+    False by default. Cloud Monitoring bills every metric-based alert condition, and a
+    reference deployment that nobody pages gains nothing from them: the signals still land in
+    Cloud Logging, where a presenter can read them. Set true in a deployment with an on-call
+    rota to notify, in that deployment's own tfvars.
+  EOT
+}
+
+variable "slo_enabled" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Whether this stack declares the availability SLO and its burn-rate alert. False by default:
+    a reference deployment that scales to zero has no error budget worth paging on, and the
+    burn alert is a billed condition. The service-error alert stays on regardless, because it
+    is the one signal that tells a presenter the service is down.
+  EOT
+}
