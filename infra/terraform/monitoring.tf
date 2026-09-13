@@ -1,6 +1,12 @@
 # monitoring.tf — production dashboard, service-level objective, and paging signals.
+#
+# The dashboard and the service-error alert always exist. The availability SLO and its burn
+# alert sit behind var.slo_enabled, and the posture alerts behind var.posture_alerts_enabled,
+# both false by default: Cloud Monitoring bills every metric-based alert condition, and a
+# scale-to-zero reference deployment has neither an error budget to spend nor anyone to page.
 
 resource "google_monitoring_service" "observability" {
+  count        = var.slo_enabled ? 1 : 0
   project      = var.project_id
   service_id   = "agent-observability"
   display_name = "agent-observability Agent Observability"
@@ -20,8 +26,9 @@ resource "google_monitoring_service" "observability" {
 }
 
 resource "google_monitoring_slo" "availability" {
+  count        = var.slo_enabled ? 1 : 0
   project      = var.project_id
-  service      = google_monitoring_service.observability.service_id
+  service      = google_monitoring_service.observability[0].service_id
   slo_id       = "availability"
   display_name = "99.9% successful requests over 30 days"
   goal         = var.slo_availability_goal
@@ -106,6 +113,7 @@ resource "google_monitoring_alert_policy" "service_errors" {
 }
 
 resource "google_monitoring_alert_policy" "slo_burn" {
+  count        = var.slo_enabled ? 1 : 0
   project      = var.project_id
   display_name = "agent-observability availability SLO fast burn"
   combiner     = "OR"
@@ -113,7 +121,7 @@ resource "google_monitoring_alert_policy" "slo_burn" {
   conditions {
     display_name = "30-day availability budget burning at 10x"
     condition_threshold {
-      filter = "select_slo_burn_rate(\"${google_monitoring_slo.availability.name}\", \"3600s\")"
+      filter = "select_slo_burn_rate(\"${google_monitoring_slo.availability[0].name}\", \"3600s\")"
 
       comparison      = "COMPARISON_GT"
       threshold_value = 10
@@ -199,6 +207,7 @@ resource "google_monitoring_dashboard" "agent_observability" {
 # vpc_sc_enforce = false these are logged and allowed: the alert is the readiness
 # signal, and a quiet window is the precondition for promoting to enforced.
 resource "google_logging_metric" "vpc_sc_dry_run_violations" {
+  count   = var.posture_alerts_enabled ? 1 : 0
   project = var.project_id
   name    = "agent_observability_vpc_sc_dry_run_violations"
   filter = join(" AND ", [
@@ -215,6 +224,7 @@ resource "google_logging_metric" "vpc_sc_dry_run_violations" {
 }
 
 resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
+  count        = var.posture_alerts_enabled ? 1 : 0
   project      = var.project_id
   display_name = "agent-observability VPC-SC dry-run violations"
   combiner     = "OR"
@@ -222,7 +232,7 @@ resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
   conditions {
     display_name = "A call would have been blocked by the audit perimeter"
     condition_threshold {
-      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.vpc_sc_dry_run_violations.name}\" AND ${local.posture_alert_resource_types}"
+      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.vpc_sc_dry_run_violations[0].name}\" AND ${local.posture_alert_resource_types}"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
@@ -245,6 +255,7 @@ resource "google_monitoring_alert_policy" "vpc_sc_dry_run" {
 # Residency / encryption posture drift: a resource created outside the allowlist, or
 # a CMEK denial, both surface as Org Policy violations in the admin activity log.
 resource "google_logging_metric" "residency_policy_violations" {
+  count   = var.posture_alerts_enabled ? 1 : 0
   project = var.project_id
   name    = "agent_observability_residency_policy_violations"
   filter = join(" AND ", [
@@ -260,6 +271,7 @@ resource "google_logging_metric" "residency_policy_violations" {
 }
 
 resource "google_monitoring_alert_policy" "residency_posture" {
+  count        = var.posture_alerts_enabled ? 1 : 0
   project      = var.project_id
   display_name = "agent-observability residency or CMEK posture violation"
   combiner     = "OR"
@@ -267,7 +279,7 @@ resource "google_monitoring_alert_policy" "residency_posture" {
   conditions {
     display_name = "An Org Policy residency / CMEK constraint denied a create"
     condition_threshold {
-      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.residency_policy_violations.name}\" AND ${local.posture_alert_resource_types}"
+      filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.residency_policy_violations[0].name}\" AND ${local.posture_alert_resource_types}"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
