@@ -15,6 +15,7 @@
 # prevent_destroy guards the key against an accidental `terraform destroy`.
 
 resource "google_kms_key_ring" "audit" {
+  count    = var.cmek_enabled ? 1 : 0
   project  = var.project_id
   name     = "agent-observability"
   location = var.region # key material shares the data's residency (P-03)
@@ -23,8 +24,9 @@ resource "google_kms_key_ring" "audit" {
 }
 
 resource "google_kms_crypto_key" "audit" {
+  count           = var.cmek_enabled ? 1 : 0
   name            = "audit-trail"
-  key_ring        = google_kms_key_ring.audit.id
+  key_ring        = one(google_kms_key_ring.audit[*].id)
   rotation_period = var.key_rotation_period
   purpose         = "ENCRYPT_DECRYPT"
 
@@ -84,9 +86,9 @@ locals {
 }
 
 resource "google_kms_crypto_key_iam_member" "service_agents" {
-  for_each = local.cmek_service_agents
+  for_each = var.cmek_enabled ? local.cmek_service_agents : {}
 
-  crypto_key_id = google_kms_crypto_key.audit.id
+  crypto_key_id = one(google_kms_crypto_key.audit[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:${each.value}"
 }
@@ -97,5 +99,5 @@ resource "google_kms_crypto_key_iam_member" "service_agents" {
 
 output "audit_cmek_key" {
   description = "CMEK protecting the audit trail (bank-rotated; destroying it crypto-shreds)."
-  value       = google_kms_crypto_key.audit.id
+  value       = one(google_kms_crypto_key.audit[*].id)
 }

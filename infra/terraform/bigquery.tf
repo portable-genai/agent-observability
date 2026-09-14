@@ -18,8 +18,11 @@ resource "google_bigquery_dataset" "finops" {
   default_table_expiration_ms = 1000 * 60 * 60 * 24 * 365
 
   # Bank-held key, not Google-managed default encryption (P-09, practice D5).
-  default_encryption_configuration {
-    kms_key_name = google_kms_crypto_key.audit.id
+  dynamic "default_encryption_configuration" {
+    for_each = var.cmek_enabled ? [1] : []
+    content {
+      kms_key_name = one(google_kms_crypto_key.audit[*].id)
+    }
   }
 
   # EXPLICIT access, because BigQuery's implicit default is not least privilege: a dataset

@@ -45,7 +45,7 @@ resource "google_cloud_run_v2_service" "observability" {
     service_account = google_service_account.run.email
 
     # Bank-held key over the revision's boot disk and in-transit-to-disk state (P-09).
-    encryption_key = google_kms_crypto_key.audit.id
+    encryption_key = one(google_kms_crypto_key.audit[*].id)
 
     # Keep one instance warm, because every caller's audit path fails CLOSED.
     #

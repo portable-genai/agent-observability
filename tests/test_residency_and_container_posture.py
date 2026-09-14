@@ -134,10 +134,12 @@ def test_cmek_key_is_regional_rotated_and_bound_to_every_audit_bearing_service()
     assert "gcp-sa-" not in code, "service-agent addresses must be asked for, not spelled out"
 
     # The per-service bindings themselves, each on the resource that holds the data.
-    assert "cmek_settings {" in _tf("logging_worm.tf")
-    assert "default_encryption_configuration {" in _tf("bigquery.tf")
-    assert "encryption_key = google_kms_crypto_key.audit.id" in _tf("cloud_run.tf")
-    assert "encryption_key = google_kms_crypto_key.audit.id" in _tf("otel_collector.tf")
+    # Each binding is a dynamic block or a one() read since CMEK became optional: present only
+    # when cmek_enabled is true, and never removable from a log bucket once applied.
+    assert 'dynamic "cmek_settings" {' in _tf("logging_worm.tf")
+    assert 'dynamic "default_encryption_configuration" {' in _tf("bigquery.tf")
+    assert "encryption_key = one(google_kms_crypto_key.audit[*].id)" in _tf("cloud_run.tf")
+    assert "encryption_key = one(google_kms_crypto_key.audit[*].id)" in _tf("otel_collector.tf")
 
 
 def test_vpc_sc_perimeter_ships_dry_run_first_and_is_promoted_by_one_variable() -> None:
