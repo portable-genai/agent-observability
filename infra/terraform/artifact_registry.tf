@@ -19,7 +19,8 @@ resource "google_project_service_identity" "artifactregistry" {
 }
 
 resource "google_kms_crypto_key_iam_member" "artifactregistry" {
-  crypto_key_id = google_kms_crypto_key.audit.id
+  count         = var.cmek_enabled ? 1 : 0
+  crypto_key_id = one(google_kms_crypto_key.audit[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:${google_project_service_identity.artifactregistry.email}"
 }
@@ -31,7 +32,7 @@ resource "google_artifact_registry_repository" "images" {
   description   = "Agent observability service and OTel collector images, CMEK-encrypted."
   format        = "DOCKER"
 
-  kms_key_name = google_kms_crypto_key.audit.id
+  kms_key_name = one(google_kms_crypto_key.audit[*].id)
 
   # Immutable tags: a deployed tag must always name the same bytes, so a digest-pinned
   # deployment cannot be undermined by the tag that produced it being moved afterwards.
