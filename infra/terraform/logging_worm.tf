@@ -54,8 +54,11 @@ resource "google_logging_project_bucket_config" "worm_audit" {
   # is encrypted with a Google-managed key and the "bank controls the audit key" claim in
   # COMPLIANCE.md is not true. Destroying the key crypto-shreds the trail, which is the
   # only lever that exists once `locked = true` forbids deletion.
-  cmek_settings {
-    kms_key_name = google_kms_crypto_key.audit.id
+  dynamic "cmek_settings" {
+    for_each = var.cmek_enabled ? [1] : []
+    content {
+      kms_key_name = one(google_kms_crypto_key.audit[*].id)
+    }
   }
 
   depends_on = [

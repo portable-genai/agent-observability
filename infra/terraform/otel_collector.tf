@@ -76,7 +76,7 @@ resource "google_cloud_run_v2_service" "otel_collector" {
     service_account = google_service_account.otel_collector.email
 
     # Same bank-held key as the audit service (P-09, practice D5).
-    encryption_key = google_kms_crypto_key.audit.id
+    encryption_key = one(google_kms_crypto_key.audit[*].id)
 
     containers {
       image = var.otel_collector_image
