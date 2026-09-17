@@ -53,10 +53,11 @@ from hex_service_kit.capabilities import (
     CapabilityManifest,
     CapabilityMode,
 )
+from hex_service_kit.logging import configure_logging
 from hex_service_kit.web import add_loopback_exposure_guard
 
 from .. import __version__
-from ..config import Settings
+from ..config import Settings, resolve_profile
 from ..container import Container
 from ..errors import IdempotencyConflict
 from ..ports.identity import VERIFIED, PortabilityPlaceholderError
@@ -441,6 +442,19 @@ def _capability_manifest(settings: Settings) -> CapabilityManifestModel:
         )
     )
 
+
+#: Service name on every log line. The repository slug: stable, greppable, and the same
+#: string the capability manifest already reports as `service`.
+_SERVICE_NAME = "agent-observability"
+
+# Configured at MODULE scope, and BEFORE `create_app()`, for the reason the exposure guard is
+# bound there too: the Dockerfile CMD and `make run-api` serve the app OBJECT, so anything
+# living only inside a function never runs in a shipped process. Before this call the deployed
+# service wrote unparsed text to stdout: no `severity`, so Cloud Logging could not colour an
+# error or drive a log-based metric from one, and no trace field, so a log line never joined
+# the request it came from. The profile comes from `resolve_profile`, which is the ONE reader
+# of OBSERVABILITY_PROFILE that `tests/test_profile_single_source.py` permits.
+configure_logging(resolve_profile().profile, service=_SERVICE_NAME)
 
 # Module-level app for ``uvicorn observability.api.app:app``.
 app = create_app()

@@ -58,6 +58,37 @@ def _container() -> Container:
     return Container()
 
 
+@app.callback()
+def _configure_logging_once() -> None:
+    """Install the profile's formatter before any command runs.
+
+    A Typer CALLBACK rather than a call under `if __name__ == "__main__"`, because the
+    installed entry point is `observability.cli.main:app` (see `[project.scripts]`): the
+    module guard never executes for `agent-observability ...`, so a call placed there would
+    configure logging for nobody in the one process that ships.
+
+    Idempotent in the kit, so a process that is both this CLI and the API app configures once
+    rather than logging every line twice. Imported inside the function to keep this module
+    import-safe, which is the constraint the module docstring states: `--help` must not pull
+    in anything the offline profile does not install.
+    """
+    from hex_service_kit.logging import configure_logging
+
+    from ..config import ProfileError, resolve_profile
+
+    try:
+        profile = resolve_profile().profile
+    except ProfileError:
+        # A rejected profile is NOT this callback's to report. `_profile_label` already turns
+        # it into an operator-readable exit 2, and surfacing it from here would replace that
+        # sentence with a traceback: exactly what
+        # `test_a_mis_capitalised_profile_is_a_clean_exit_two_not_a_traceback` forbids, and
+        # what this callback did when it was first written. Logging is diagnosis, so it takes
+        # the human-readable formatter and lets the command fail the way it already failed.
+        profile = "local"
+    configure_logging(profile, service="agent-observability")
+
+
 def _profile_label() -> str:
     """The active profile, or a clean exit-2 when OBSERVABILITY_PROFILE names no profile.
 
