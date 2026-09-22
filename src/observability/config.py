@@ -45,6 +45,15 @@ from .envread import setting_or_default
 
 REGION = "asia-southeast1"
 
+#: The Firestore database the gcp audit sink reserves idempotency keys in, as
+#: ``infra/terraform/firestore.tf`` names it. The deployment passes the name in from that
+#: resource (``OBSERVABILITY_IDEMPOTENCY_DATABASE``); this default only has to agree with it, and
+#: ``tests/test_idempotency_database_is_the_one_terraform_creates.py`` holds the two together.
+#: Until 2026-09-22 the adapter carried its own literal, the retired ``hrz-`` name, which the
+#: catalog-id rename changed in the Terraform and missed here, so the deployed sink asked for a
+#: database that no longer existed and refused every audit write.
+IDEMPOTENCY_DATABASE = "agent-observability-idempotency"
+
 #: The ONE environment variable naming the adapter family, read ONLY by
 #: :func:`resolve_profile`. ``tests/test_profile_single_source.py`` fails the build if any
 #: other module reads it, because a second read is a second chance to default permissively.
@@ -337,13 +346,15 @@ class LoggingSettings:
     ``log_name`` is the structured log the audit events are written to; a Terraform sink
     routes that log into ``bucket_id`` (a *locked* Cloud Logging bucket, retention
     ``retention_days``). ``read_back_window`` is how many days of recent events
-    ``GET /v1/audit`` reads for demos.
+    ``GET /v1/audit`` reads for demos. ``idempotency_database`` is the Firestore database the
+    gcp sink reserves each Idempotency-Key in; Terraform creates it and passes its name in.
     """
 
     log_name: str = "agent-observability-audit"
     bucket_id: str = "agent-observability-worm"
     retention_days: int = 2557  # ~7 years (rule R2 WORM retention)
     read_back_window_days: int = 30
+    idempotency_database: str = IDEMPOTENCY_DATABASE
 
 
 @dataclass(frozen=True, slots=True)
@@ -466,6 +477,7 @@ class Settings:
                 bucket_id=str(log.get("bucket_id", "agent-observability-worm")),
                 retention_days=_as_int(log.get("retention_days", 2557), 2557),
                 read_back_window_days=_as_int(log.get("read_back_window_days", 30), 30),
+                idempotency_database=str(log.get("idempotency_database", IDEMPOTENCY_DATABASE)),
             ),
             finops=FinOpsSettings(
                 bigquery_dataset=str(fin.get("bigquery_dataset", "agent_finops")),
