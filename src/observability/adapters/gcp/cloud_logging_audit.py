@@ -133,9 +133,19 @@ class CloudLoggingAuditAdapter:
         if self._firestore_client is None:
             from google.cloud import firestore  # lazy
 
+            # The database is the one Terraform creates, passed in rather than written here: a
+            # literal in this line is how the sink came to ask for a database the catalog-id
+            # rename had removed. An empty name is refused, because the client would take it as
+            # "(default)" and keep the ledger in a database nothing provisioned for it.
+            database = self._settings.logging.idempotency_database.strip()
+            if not database:
+                raise ValueError(
+                    "logging.idempotency_database is empty; name the Firestore database "
+                    "infra/terraform/firestore.tf creates (OBSERVABILITY_IDEMPOTENCY_DATABASE)"
+                )
             self._firestore_client = firestore.Client(
                 project=self._settings.project_id,
-                database="hrz-observability-idempotency",
+                database=database,
             )
         doc_id = hashlib.sha256(key.encode("utf-8")).hexdigest()
         ref = self._firestore_client.collection("audit_idempotency").document(doc_id)

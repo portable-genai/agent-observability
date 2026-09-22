@@ -107,6 +107,12 @@ resource "google_cloud_run_v2_service" "observability" {
         name  = "OBSERVABILITY_BQ_DATASET"
         value = google_bigquery_dataset.finops.dataset_id
       }
+      # The idempotency ledger's database, named by the resource that creates it, so the sink
+      # and the stack cannot disagree about it again.
+      env {
+        name  = "OBSERVABILITY_IDEMPOTENCY_DATABASE"
+        value = google_firestore_database.audit_idempotency.name
+      }
     }
   }
 

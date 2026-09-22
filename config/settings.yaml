@@ -32,6 +32,9 @@ logging:
   bucket_id: ${OBSERVABILITY_WORM_BUCKET:-agent-observability-worm}
   retention_days: ${OBSERVABILITY_RETENTION_DAYS:-2557}   # ~7 years (rule R2 WORM)
   read_back_window_days: ${OBSERVABILITY_READBACK_DAYS:-30}
+  # The Firestore database the gcp sink reserves idempotency keys in. Terraform creates it
+  # (infra/terraform/firestore.tf) and passes its name in, so the two cannot disagree.
+  idempotency_database: ${OBSERVABILITY_IDEMPOTENCY_DATABASE:-agent-observability-idempotency}
 
 finops:
   bigquery_dataset: ${OBSERVABILITY_BQ_DATASET:-agent_finops}
