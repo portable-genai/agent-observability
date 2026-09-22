@@ -30,14 +30,26 @@ COPY requirements-gcp.lock ./
 COPY --from=builder /dist/*.whl /tmp/
 # git is needed only while pip resolves the git+https commons pin (hex-service-kit);
 # purge it in the same layer so the runtime image does not carry it.
+#
+# The same layer also UPGRADES the base and then removes pip. A digest pin freezes the base image
+# and every unpatched package in it: the image this stack ran from 2026-08-29 carried 43 fixable
+# HIGH and CRITICAL Debian findings for exactly that reason, and failed the blocking promotion
+# scan its siblings pass (cdd-sow-research has upgraded all along; compliance-advisory and
+# credit-memo-drafting adopted it in September). A serving container installs nothing, and pip
+# vendors its own dependencies, which a scanner reports as installed packages, so it goes once
+# the install is done. Build with --no-cache, or a cached layer ships the old patch level.
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends git \
     && pip install --no-cache-dir -r requirements-gcp.lock \
     && pip install --no-cache-dir --no-deps /tmp/*.whl \
     && apt-get purge -y git \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/*.whl
+    && rm -rf /tmp/*.whl \
+    && rm -rf /usr/local/lib/python3.14/site-packages/pip \
+              /usr/local/lib/python3.14/site-packages/pip-*.dist-info \
+              /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.14
 
 # Settings file (env-interpolated at load time).
 COPY config ./config

@@ -193,3 +193,19 @@ def test_container_is_non_root_minimal_and_healthchecked() -> None:
     # Multi-stage: the build toolchain stays in the builder stage.
     runtime_stage = dockerfile.split("AS runtime", 1)[1]
     assert "pip install --no-cache-dir build" not in runtime_stage
+
+
+def test_runtime_stage_patches_its_pinned_base_and_ships_no_package_manager() -> None:
+    """The image that ran until 2026-09-22 failed the blocking scan on its base alone.
+
+    A digest pin freezes unpatched packages, so the runtime stage must upgrade them; and pip,
+    which vendors its own dependencies, must not survive into a container that installs nothing.
+    """
+    runtime_stage = (ROOT / "Dockerfile").read_text(encoding="utf-8").split("AS runtime", 1)[1]
+
+    assert "apt-get upgrade -y" in runtime_stage
+    assert "/usr/local/lib/python3.14/site-packages/pip " in runtime_stage
+    assert "/usr/local/bin/pip " in runtime_stage
+    # The upgrade runs BEFORE the install, in the same layer, so nothing installs on stale bases.
+    install = runtime_stage.index("pip install --no-cache-dir -r requirements-gcp.lock")
+    assert runtime_stage.index("apt-get upgrade -y") < install
