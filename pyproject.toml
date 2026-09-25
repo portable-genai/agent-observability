@@ -47,7 +47,7 @@ gcp = [
 ]
 # OpenTelemetry instrumentation for the running service (traces -> OTel collector).
 otel = [
-  "opentelemetry-sdk>=1.27",
+  "opentelemetry-sdk>=1.44.0",
   "opentelemetry-exporter-otlp>=1.27",
   "opentelemetry-instrumentation-fastapi>=0.48b0",
 ]
