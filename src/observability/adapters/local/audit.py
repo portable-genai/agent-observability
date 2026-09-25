@@ -64,9 +64,21 @@ but cannot write the anchor file.** Both lists below are asserted, tamper by tam
   operator calls :meth:`reanchor`.
 
 There are exactly three writers of the anchor file -- :meth:`record`, :meth:`import_jsonl`
-and :meth:`reanchor` -- and the first two now refuse rather than write over a witness that
-disagrees; the third is the deliberate operator action. Nothing else in the tree (the CLI,
-the API, the constructor, the prune) touches it.
+and :meth:`reanchor` -- and the first two never write over a witness that disagrees; the third
+is the deliberate operator action. Nothing else in the tree (the CLI, the API, the
+constructor, the prune) writes it.
+
+**The laptop rule.** Under the ``local`` profile a demo reset is never refused by this
+machinery. A store whose anchor disagrees with it (rolled back, truncated, missing, or a
+forged prune) or whose file is not a readable database is moved aside with
+:func:`hex_service_kit.audit.set_aside`, store and anchor together, renamed in place and never
+deleted, and a fresh chain starts from genesis with a warning naming where the old files went.
+A divergent anchor is acted on at the next append, never on open, so ``audit verify`` still
+reports it; an unreadable database is acted on at open. The divergent pair is kept exactly
+as found, so verifying it still reports the divergence: nothing is re-anchored and nothing is
+laundered, the trail simply stops being the one appended to. :meth:`verify_chain` reports what
+it sees and moves nothing. Any other profile binding this store keeps refusing to append, as
+described above.
 
 **Not detected**, precisely:
 
@@ -119,6 +131,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
+from contextlib import suppress
 from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
@@ -126,7 +140,7 @@ from typing import Any
 from uuid import uuid4
 
 from hex_service_kit import EXPORT_FORMAT, AuditChainError, ChainReport
-from hex_service_kit.audit import HashChainedAuditLog, scan_chain_rows
+from hex_service_kit.audit import HashChainedAuditLog, scan_chain_rows, set_aside
 
 from ...config import Settings
 from ...errors import IdempotencyConflict
@@ -160,10 +174,27 @@ class LocalAppendOnlyAuditAdapter(HashChainedAuditLog):
         self._fs_collection = "agent_observability_audit"
 
         path = settings.local.audit_path or str(_DEFAULT_AUDIT_PATH)
+        anchor_path = self._resolve_anchor_path(settings, path)
+        #: The laptop rule (see the module docstring) holds for the ``local`` profile only.
+        self._laptop = settings.profile == "local"
+        try:
+            self._open_store(path, anchor_path)
+        except sqlite3.DatabaseError as exc:
+            # ``sqlite3.DatabaseError`` itself is "file is not a database" / "malformed";
+            # a locked or full database is a subclass and stays an outage.
+            if not self._laptop or type(exc) is not sqlite3.DatabaseError:
+                raise
+            self._start_fresh(f"the store is not a readable database ({exc})")
+        # A store whose anchor disagrees is NOT set aside here: opening the store is also how
+        # `audit verify` reads it, and a verify must report the divergence, never move it.
+        # The append path, which is where the refusal would come from, sets it aside.
+
+    def _open_store(self, path: str, anchor_path: str) -> None:
+        """Open (or create) the store at ``path`` with this profile's schema on top."""
         # The commons constructor opens the connection (check_same_thread=False + a lock,
         # because the FastAPI app shares one adapter across threads), creates the chained
         # table and the WORM triggers, and records the anchor path.
-        super().__init__(path, anchor_path=self._resolve_anchor_path(settings, path))
+        super().__init__(path, anchor_path=anchor_path)
         table_info = self._conn.execute("PRAGMA table_info(audit_log)").fetchall()
         columns = {str(row["name"]) for row in table_info}
         # The commons table carries only (seq, event_json, prev_hash, entry_hash). These are
@@ -221,6 +252,36 @@ class LocalAppendOnlyAuditAdapter(HashChainedAuditLog):
             "WHERE idempotency_key IS NOT NULL AND idempotency_key != ''"
         )
         self._conn.commit()
+
+    def _set_aside_if_divergent(self) -> None:
+        """Under the laptop profile, start fresh instead of refusing a divergent store."""
+        if not self._laptop:
+            return
+        problem = self._anchor_disagreement()
+        if problem:
+            self._start_fresh(problem)
+
+    def _start_fresh(self, reason: str) -> None:
+        """Set the store and its anchor aside together and open an empty chain in their place.
+
+        Keeps the lock the adapter already hands out (a caller may be holding it), and folds
+        any WAL into the database first, because the sidecars are renamed one by one and a
+        WAL separated from its database would hide its rows from the set-aside copy.
+        """
+        lock = getattr(self, "_lock", None)
+        path, anchor_path = self._path, self._anchor_path
+        conn = getattr(self, "_conn", None)
+        if conn is not None:
+            with suppress(sqlite3.Error):
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            conn.close()
+        files = [path, f"{path}-wal", f"{path}-shm", f"{path}-journal"]
+        if anchor_path:
+            files.append(anchor_path)
+        set_aside(files, reason=f"observability audit store: {reason}")
+        self._open_store(path, anchor_path)
+        if lock is not None:
+            self._lock = lock
 
     # ------------------------------------------------------------------ #
     # Seeding (deterministic corpus for the CLI smoke run + tests)
@@ -282,6 +343,8 @@ class LocalAppendOnlyAuditAdapter(HashChainedAuditLog):
             return self._record_once_emulator(event, key, digest)
         payload = to_jsonable(event)
         with self._lock:
+            # The laptop answer to a divergent store, before anything is read from it.
+            self._set_aside_if_divergent()
             existing = self._conn.execute(
                 "SELECT event_id, payload_digest FROM audit_log "
                 "WHERE idempotency_key = ? OR event_id = ? LIMIT 1",
@@ -299,6 +362,7 @@ class LocalAppendOnlyAuditAdapter(HashChainedAuditLog):
             # Fail closed rather than re-anchor a store that has diverged from its witness:
             # without this, one ordinary append after a tamper rewrote the anchor from the
             # forged state and verification went green again (see _assert_anchor_continuity).
+            # Under the laptop profile the divergent store was already set aside above.
             self._assert_anchor_continuity()
             event_json = canonical(payload)
             prev_hash = self._head_hash()

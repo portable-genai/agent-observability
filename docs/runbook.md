@@ -192,16 +192,23 @@ rewrite the store can rewrite the anchor with it, and both a truncated tail and 
 deletion recorded as a retention prune become undetectable. `src/observability/adapters/local/audit.py` states the
 detected and undetected tamper classes exactly.
 
-### The store fails closed once it disagrees with its anchor
+### The store never re-anchors once it disagrees with its anchor
 
-Appends are refused (`AuditChainError`, HTTP `503` on `POST /v1/audit`, see SPEC §6) as soon
-as the store no longer matches the anchor: a divergence, a missing anchor file, or one whose
-watermark keys have been removed. This is deliberate: rewriting the anchor on every append would
-let a single ordinary request after a tamper re-anchor the tampered state so verification reads
-green again. Refusing to append is what makes detection permanent rather than a race against the
-next request. Expect an audit outage, not silent laundering.
+A divergence, a missing anchor file, or one whose watermark keys have been removed is never
+re-anchored by an append: rewriting the anchor on every append would let a single ordinary
+request after a tamper re-anchor the tampered state so verification reads green again.
 
-Recovery, in order:
+Under the `local` profile (the laptop) the next append sets the store and its anchor aside,
+renamed to `<file>.set-aside-<UTC timestamp>` and never deleted, logs a warning naming them,
+and starts a fresh chain; an unreadable database file is set aside the same way when the store
+opens. Opening the store never moves a divergent one, so `audit verify` still reports it until
+something appends. Point `audit verify` at the set-aside pair (`OBSERVABILITY_LOCAL_AUDIT` and
+`OBSERVABILITY_LOCAL_ANCHOR`) to see the divergence exactly as it was.
+
+Any other binding of this store refuses the append (`AuditChainError`, HTTP `503` on
+`POST /v1/audit`, see SPEC §6): expect an audit outage, not silent laundering.
+
+Recovery from a refusal, in order:
 
 1. `agent-observability audit verify` and read the detail line: it names which half
    disagrees (head, watermark, missing file, degraded file).
