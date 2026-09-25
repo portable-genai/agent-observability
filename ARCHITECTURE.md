@@ -95,8 +95,9 @@ and refuse DELETE outside a recorded retention prune, every record is hash-chain
 predecessor, and both the chain head and the retention-prune watermark are anchored in an
 external file, so a truncated tail and a prefix deletion dressed up as a prune are both
 detectable (only while that anchor is held separately from the store). Once the store and
-that anchor disagree, appends are refused rather than re-anchored, so the finding survives
-the next request instead of being laundered by it. `agent-observability audit verify | export | restore` is the operator surface,
+that anchor disagree, an append never re-anchors it, so the finding survives the next request
+instead of being laundered by it: under the `local` profile the divergent pair is set aside
+intact and a fresh chain starts (SPEC §2.1), and any other binding refuses the append. `agent-observability audit verify | export | restore` is the operator surface,
 and `src/observability/adapters/local/audit.py` documents exactly which tamper classes are
 and are not detected. The `onprem` placeholder raises rather than silently dropping a
 record, so a real immutable store must be supplied before that profile ships.

@@ -11,6 +11,7 @@ attacker with file access would do it, never through the adapter's own API.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from pathlib import Path
 
@@ -45,8 +46,17 @@ def _event(n: int) -> AuditEvent:
     )
 
 
+#: A profile other than the laptop's binding this store. Everywhere but ``local`` a divergent
+#: store is refused, never set aside, and the fail-closed tests below are written against it.
+_NOT_LAPTOP = "onprem"
+
+
 def _store(
-    tmp_path: Path, *, max_events: int = 100, anchor: str | None = None
+    tmp_path: Path,
+    *,
+    max_events: int = 100,
+    anchor: str | None = None,
+    profile: str = "local",
 ) -> tuple[
     LocalAppendOnlyAuditAdapter,
     str,
@@ -54,11 +64,16 @@ def _store(
     db = str(tmp_path / "audit.db")
     settings = Settings(
         region="asia-southeast1",
-        profile="local",
+        profile=profile,
         max_events=max_events,
         local=LocalSettings(audit_path=db, anchor_path=anchor or ""),
     )
     return LocalAppendOnlyAuditAdapter(settings), db
+
+
+def _set_aside(directory: Path, name: str) -> Path:
+    (found,) = sorted(directory.glob(f"{name}.set-aside-*"))
+    return found
 
 
 def _fill(store: LocalAppendOnlyAuditAdapter, count: int) -> None:
@@ -398,7 +413,7 @@ def test_one_ordinary_append_cannot_launder_a_forged_prune(tmp_path: Path) -> No
     """
     anchor = str(tmp_path / "elsewhere" / "audit.anchor.json")
     Path(anchor).parent.mkdir(parents=True, exist_ok=True)
-    store, db = _store(tmp_path, anchor=anchor)
+    store, db = _store(tmp_path, anchor=anchor, profile=_NOT_LAPTOP)
     _fill(store, 6)
     anchored_before = Path(anchor).read_text(encoding="utf-8")
     _forge_prune(db, erase_through_offset=2)
@@ -474,7 +489,7 @@ def test_a_downgraded_anchor_is_caught(tmp_path: Path) -> None:
     """
     anchor = str(tmp_path / "elsewhere" / "audit.anchor.json")
     Path(anchor).parent.mkdir(parents=True, exist_ok=True)
-    store, db = _store(tmp_path, anchor=anchor)
+    store, db = _store(tmp_path, anchor=anchor, profile=_NOT_LAPTOP)
     _fill(store, 6)
     _forge_prune(db, erase_through_offset=2)
     downgraded = json.loads(Path(anchor).read_text(encoding="utf-8"))
@@ -494,7 +509,7 @@ def test_reanchor_is_the_only_way_back_and_is_an_operator_decision(tmp_path: Pat
     """Recovery is deliberate: appends never re-establish a witness, an operator does."""
     anchor = str(tmp_path / "elsewhere" / "audit.anchor.json")
     Path(anchor).parent.mkdir(parents=True, exist_ok=True)
-    store, _ = _store(tmp_path, anchor=anchor)
+    store, _ = _store(tmp_path, anchor=anchor, profile=_NOT_LAPTOP)
     _fill(store, 3)
     Path(anchor).unlink()
 
@@ -726,3 +741,145 @@ def test_restore_refuses_a_non_empty_store(tmp_path: Path) -> None:
 
     with pytest.raises(AuditChainError, match="non-empty"):
         source.import_jsonl(dump)
+
+
+# --------------------------------------------------------------------------- #
+# The laptop rule: a divergent store is set aside, never refused, never laundered
+# --------------------------------------------------------------------------- #
+def test_on_the_laptop_an_append_after_a_forged_prune_starts_a_fresh_chain(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The append the other profiles refuse starts a new trail instead, and launders nothing.
+
+    The forged store and the anchor that witnessed it are moved aside together, exactly as
+    found, so verifying that pair still reports the forgery. What was never re-anchored cannot
+    have been laundered; it simply stopped being the trail the service appends to.
+    """
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, db = _store(tmp_path, anchor=anchor)
+    _fill(store, 6)
+    anchored_before = Path(anchor).read_text(encoding="utf-8")
+    _forge_prune(db, erase_through_offset=2)
+    assert store.verify_chain().ok is False  # detection is intact before anything moves
+
+    with caplog.at_level(logging.WARNING, logger="hex_service_kit.audit"):
+        store.record(_event(99))
+
+    assert "set aside" in caplog.text
+    assert "watermark does not match" in caplog.text
+    fresh = store.verify_chain()
+    assert fresh.ok is True and fresh.entries == 1
+    assert [e.event_id for e in store.read_recent(limit=10)] == ["audit-0099"]
+    kept_anchor = _set_aside(elsewhere, "audit.anchor.json")
+    assert kept_anchor.read_text(encoding="utf-8") == anchored_before
+    old = LocalAppendOnlyAuditAdapter(
+        Settings(
+            region="asia-southeast1",
+            profile="local",
+            max_events=100,
+            local=LocalSettings(
+                audit_path=str(_set_aside(tmp_path, "audit.db")), anchor_path=str(kept_anchor)
+            ),
+        )
+    )
+    report = old.verify_chain()
+    assert report.ok is False
+    assert "watermark does not match the external anchor" in report.detail
+    assert old.count() == 3
+
+
+def test_on_the_laptop_a_deleted_anchor_sets_the_store_aside_on_append(tmp_path: Path) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, _ = _store(tmp_path, anchor=anchor)
+    _fill(store, 3)
+    Path(anchor).unlink()
+
+    store.record(_event(9))
+
+    assert store.verify_chain().ok is True
+    assert store.count() == 1
+    assert _set_aside(tmp_path, "audit.db").is_file()
+
+
+def test_on_the_laptop_a_rolled_back_store_is_set_aside_on_append(tmp_path: Path) -> None:
+    """A database restored from an older copy behind its anchor: a truncated tail."""
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, db = _store(tmp_path, anchor=anchor)
+    _fill(store, 2)
+    older = tmp_path / "older.db"
+    store._conn.execute("VACUUM INTO ?", (str(older),))
+    for n in range(2, 7):
+        store.record(_event(n))
+    del store
+    Path(db).write_bytes(older.read_bytes())
+    restarted, _ = _store(tmp_path, anchor=anchor)
+    assert restarted.verify_chain().ok is False  # opening the store moved nothing
+
+    restarted.record(_event(42))
+
+    assert restarted.verify_chain().ok is True
+    assert restarted.count() == 1
+    assert _set_aside(elsewhere, "audit.anchor.json").is_file()
+
+
+def test_on_the_laptop_a_missing_store_beside_its_anchor_starts_fresh(tmp_path: Path) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, db = _store(tmp_path, anchor=anchor)
+    _fill(store, 3)
+    del store
+    Path(db).unlink()
+
+    restarted, _ = _store(tmp_path, anchor=anchor)
+    restarted.record(_event(7))
+
+    assert restarted.verify_chain().ok is True
+    assert restarted.count() == 1
+    assert _set_aside(elsewhere, "audit.anchor.json").is_file()
+
+
+def test_on_the_laptop_an_unreadable_database_is_set_aside_at_open(tmp_path: Path) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, db = _store(tmp_path, anchor=anchor)
+    _fill(store, 3)
+    del store
+    Path(db).write_bytes(b"not a sqlite database, fictional corruption" * 100)
+
+    restarted, _ = _store(tmp_path, anchor=anchor)
+    restarted.record(_event(1))
+
+    assert restarted.verify_chain().ok is True
+    assert _set_aside(tmp_path, "audit.db").read_bytes().startswith(b"not a sqlite")
+
+
+def test_everywhere_else_an_unreadable_database_still_refuses_to_open(tmp_path: Path) -> None:
+    db = tmp_path / "audit.db"
+    db.write_bytes(b"not a sqlite database, fictional corruption" * 100)
+
+    with pytest.raises(sqlite3.DatabaseError):
+        _store(tmp_path, profile=_NOT_LAPTOP)
+    assert sorted(tmp_path.glob("*.set-aside-*")) == []
+
+
+def test_on_the_laptop_a_healthy_store_is_never_set_aside(tmp_path: Path) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    anchor = str(elsewhere / "audit.anchor.json")
+    store, _ = _store(tmp_path, anchor=anchor)
+    _fill(store, 3)
+    del store
+    reopened, _ = _store(tmp_path, anchor=anchor)
+    reopened.record(_event(3))
+
+    assert reopened.count() == 4
+    assert reopened.verify_chain().ok is True
+    assert sorted(tmp_path.rglob("*.set-aside-*")) == []

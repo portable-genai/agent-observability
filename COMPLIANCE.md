@@ -45,7 +45,8 @@ not applicable; those are marked honestly rather than padded.
 * `agent-observability audit verify`: re-derives the hash chain over the local trail;
   `tests/test_audit_chain.py` doctors, deletes, truncates, fabricates unchained rows and
   forges retention prunes and asserts each is caught, asserts that the following append
-  cannot launder any of them, and asserts the classes that are honestly NOT caught without
+  cannot launder any of them (refused off the laptop; on the laptop the divergent pair is set
+  aside intact and still fails verification), and asserts the classes that are honestly NOT caught without
   an anchor).
 * `terraform -chdir=infra/terraform validate`: the residency, CMEK and dry-run VPC-SC
   posture is valid Terraform with no cloud credentials.

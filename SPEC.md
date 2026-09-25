@@ -57,9 +57,15 @@ two-state read that makes an unset variable indistinguishable from a chosen `loc
   and the prune watermark (truncation and forged-prune detection), `max_events` read-back cap, newest-first
   read-back filtered by actor / action. A row carrying no chain hashes makes verification
   fail rather than count as unverified-but-fine. The anchor is not last-write-wins: an
-  append is REFUSED while the store disagrees with the anchor (missing, degraded or
+  append never re-anchors a store that disagrees with the anchor (missing, degraded or
   mismatched), so no tamper can be laundered by the traffic that follows it, and
-  re-establishing the anchor is the explicit operator action `audit reanchor --confirm`. Serialised with the domain `to_jsonable` so a
+  re-establishing the anchor is the explicit operator action `audit reanchor --confirm`.
+  Under the `local` profile (the laptop) that append sets the divergent store and its
+  anchor aside with `hex_service_kit.audit.set_aside` (renamed, never deleted, still
+  reporting the divergence when verified) and starts a fresh chain with a warning; an
+  unreadable database file is set aside the same way when the store opens. A demo reset is
+  never refused by the audit machinery. Any other binding of this store refuses the append.
+  Serialised with the domain `to_jsonable` so a
   stored event round-trips through JSON exactly like the managed Cloud Logging sink.
   Seedable with a built-in synthetic corpus (`src/observability/adapters/local/_seed.py`) so the CLI smoke
   run and the tests share one deterministic dataset.
@@ -116,7 +122,7 @@ names the migration target (no traceback).
 
 | Method | Path | Body / Query | Result |
 |---|---|---|---|
-| `POST` | `/v1/audit` | `{AuditEvent}` + optional `Idempotency-Key` | `202` → `{"status":"accepted","event_id":"..."}`; `409` on conflict; `503` when the local store refuses to append because it no longer matches its external anchor (fail closed, see §2.1) |
+| `POST` | `/v1/audit` | `{AuditEvent}` + optional `Idempotency-Key` | `202` → `{"status":"accepted","event_id":"..."}`; `409` on conflict; `503` when a non-laptop binding of the local store refuses to append because it no longer matches its external anchor (fail closed, see §2.1; the `local` profile sets that store aside and accepts) |
 | `GET` | `/v1/audit` | `?actor=&action=&limit=` | `200` → `[{AuditEvent}, ...]` (newest first, redacted) |
 | `GET` | `/v1/audit/{event_id}` | n/a | `200` exact event; `404` if absent |
 | `GET` | `/healthz` | n/a | `200` → `{"status":"ok"}` |

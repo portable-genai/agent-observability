@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from conftest import LOOPBACK_PEER
 from helpers import sample_event
+from observability.adapters.local.audit import LocalAppendOnlyAuditAdapter
 from observability.api.app import create_app
 from observability.config import LocalSettings, Settings
 
@@ -241,13 +244,16 @@ def test_duplicate_event_id_with_different_payload_is_rejected(client: TestClien
 
 
 def test_a_tampered_store_refuses_writes_with_503_instead_of_laundering_them(
-    tmp_path: Path, settings: Settings
+    tmp_path: Path, settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Fail closed at the HTTP seam too: accepting the write would re-anchor the tamper.
 
     RED before the append-time anchor check: this POST returned 202 and the very act of
     accepting it re-anchored the forged prune, so the next `audit verify` came back clean.
+    The laptop profile sets such a store aside instead (the next test), so the refusal is
+    exercised here as any other binding of this store gets it.
     """
+    monkeypatch.setattr(LocalAppendOnlyAuditAdapter, "_set_aside_if_divergent", lambda self: None)
     db = tmp_path / "audit.db"
     anchor = tmp_path / "elsewhere.anchor.json"
     settings = replace(settings, local=LocalSettings(audit_path=str(db), anchor_path=str(anchor)))
@@ -273,3 +279,39 @@ def test_a_tampered_store_refuses_writes_with_503_instead_of_laundering_them(
     assert response.status_code == 503
     assert "writes refused" in response.json()["detail"]
     assert anchor.read_text(encoding="utf-8") == anchored_before
+
+
+def test_on_the_laptop_a_tampered_store_is_set_aside_and_the_write_lands_fresh(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """The laptop rule at the HTTP seam: no 503, and still no laundering.
+
+    The forged store and its anchor move aside untouched; the write starts a new chain.
+    """
+    db = tmp_path / "audit.db"
+    anchor = tmp_path / "elsewhere.anchor.json"
+    settings = replace(settings, local=LocalSettings(audit_path=str(db), anchor_path=str(anchor)))
+    with TestClient(create_app(settings), client=LOOPBACK_PEER) as client:
+        for n in range(4):
+            assert client.post("/v1/audit", json=sample_event(event_id=f"seed-{n}")).status_code
+
+        with sqlite3.connect(str(db)) as raw:  # forged prune: no trigger dropped
+            seq, entry = raw.execute(
+                "SELECT seq, entry_hash FROM audit_log ORDER BY seq LIMIT 1"
+            ).fetchone()
+            raw.execute(
+                "UPDATE audit_chain_state SET prune_open = 1, pruned_seq = ?, pruned_hash = ? "
+                "WHERE id = 1",
+                (seq, entry),
+            )
+            raw.execute("DELETE FROM audit_log WHERE seq <= ?", (seq,))
+            raw.execute("UPDATE audit_chain_state SET prune_open = 0 WHERE id = 1")
+        anchored_before = anchor.read_text(encoding="utf-8")
+
+        response = client.post("/v1/audit", json=sample_event(event_id="after-tamper"))
+
+    assert response.status_code == 202
+    (kept_anchor,) = sorted(tmp_path.glob("elsewhere.anchor.json.set-aside-*"))
+    assert kept_anchor.read_text(encoding="utf-8") == anchored_before
+    assert sorted(tmp_path.glob("audit.db.set-aside-*"))
+    assert json.loads(anchor.read_text(encoding="utf-8"))["seq"] == 1
