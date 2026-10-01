@@ -42,7 +42,6 @@ retention_days = 2557
 # key_rotation_period = "7776000s"
 
 # Set false when residency / CMEK Org Policy is owned centrally at folder or org level.
-# enforce_org_policies = true
 
 # VPC-SC. The perimeter is inert until you supply your Access Context Manager policy id.
 # It then applies in DRY RUN: violations are logged and allowed, and the
@@ -51,3 +50,9 @@ retention_days = 2557
 # access_policy_id     = "123456789012"
 # vpc_sc_access_levels = ["accessPolicies/123456789012/accessLevels/corp_managed_devices"]
 # vpc_sc_enforce       = false
+
+# Slice 7 (2026-10-02): these reversible controls default OFF in code, so a production
+# deployment states them here.
+enforce_org_policies = true
+cloud_run_deletion_protection = true
+firestore_delete_protection_enabled = true

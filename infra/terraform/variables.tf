@@ -30,8 +30,8 @@ variable "allowed_regions" {
 
 variable "enforce_org_policies" {
   type        = bool
-  description = "Manage the residency + require-CMEK Org Policies here (org_policy.tf). Set false when policy is owned centrally at folder / org level."
-  default     = true
+  description = "Manage the residency + require-CMEK Org Policies here (org_policy.tf). Set false when policy is owned centrally at folder / org level. Off by default since 2026-10-02 (slice 7 of the posture rule: a control that is not irreversible defaults off in code); terraform.tfvars.example states the production form."
+  default     = false
 }
 
 variable "key_rotation_period" {
@@ -178,13 +178,16 @@ variable "cloud_run_deletion_protection" {
     "cannot destroy service without setting deletion_protection=false" mid-apply — a
     half-applied stack blocked by a value nobody had chosen. A reference or evaluation stack
     that must stay replaceable sets this false deliberately.
+
+    Off by default since 2026-10-02 (slice 7 of the posture rule: a control that is not
+    irreversible defaults off in code); terraform.tfvars.example states the production form.
   EOT
-  default     = true
+  default     = false
 }
 
 variable "firestore_delete_protection_enabled" {
   type        = bool
-  default     = true
+  default     = false
   description = <<-EOT
     Firestore delete protection on the idempotency ledger. Default true.
 
@@ -192,6 +195,9 @@ variable "firestore_delete_protection_enabled" {
     edit before it could even plan. The protection is right for a production stack; a
     reference stack that must stay replaceable declines it in tfvars, exactly as it already
     can for cloud_run_deletion_protection and worm_locked.
+
+    Off by default since 2026-10-02 (slice 7 of the posture rule: a control that is not
+    irreversible defaults off in code); terraform.tfvars.example states the production form.
   EOT
 }
 
