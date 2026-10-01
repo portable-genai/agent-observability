@@ -78,7 +78,7 @@ grpcio-status==1.84.0
     # via google-api-core
 h11==0.16.0
     # via uvicorn
-hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@ec2d724512c4d21c70600a895715e4340908282d
+hex-service-kit @ git+https://github.com/portable-genai/hex-service-kit@c57f644b4a021c7d056d211014b5287ce1aca3c5
     # via agent-observability (pyproject.toml)
 httptools==0.8.0
     # via uvicorn
