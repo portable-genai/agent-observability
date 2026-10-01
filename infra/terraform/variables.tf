@@ -83,7 +83,10 @@ variable "vpc_sc_access_levels" {
 variable "retention_days" {
   type        = number
   description = <<-EOT
-    WORM audit-bucket retention in days. Default 2557 (~7 years, rule R2).
+    WORM audit-bucket retention in days. Default 30 days since 2026-10-02 (slice 7 of the posture rule: multi-year retention
+    is a reversible control, so it defaults off in code and terraform.tfvars.example
+    states the production form). 30 is the window Cloud Logging's _Default bucket keeps
+    anyway.
 
     The 2557-day compliance floor binds whenever worm_locked = true, which is the production
     posture. It is NOT applied to an unlocked stack, where the retention policy is removable by
@@ -92,7 +95,7 @@ variable "retention_days" {
     stays destroyable, without weakening what a production deployment gets: turning the lock
     on re-imposes the floor at plan time.
   EOT
-  default     = 2557
+  default     = 30
 
   validation {
     condition     = var.worm_locked ? var.retention_days >= 2557 : var.retention_days >= 1
