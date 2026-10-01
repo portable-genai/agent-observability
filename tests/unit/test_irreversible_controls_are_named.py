@@ -69,7 +69,9 @@ def test_the_lock_has_no_default_so_every_plan_names_it() -> None:
 
 def test_the_retention_floor_binds_only_when_locked() -> None:
     block = _variable_block("retention_days")
-    assert re.search(r"^\s*default\s*=\s*2557\b", block, re.MULTILINE)
+    # Slice 7 (2026-10-02): multi-year retention is reversible, so it defaults to a short window
+    # and the production form states 2557; the floor below is what binds a locked bucket.
+    assert re.search(r"^\s*default\s*=\s*30\b", block, re.MULTILINE)
     condition = re.search(r"^\s*condition\s*=\s*(.+)$", block, re.MULTILINE)
     assert condition is not None, (
         "retention_days carries no validation, so a locked bucket could be created with a short "
